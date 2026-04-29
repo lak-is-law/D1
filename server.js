@@ -123,15 +123,12 @@ app.get("/api/auth/google", (_req, res) => {
       message: "Google OAuth is not configured on backend"
     });
   }
-  const role = _req.query.role === "ADMIN" ? "ADMIN" : "STUDENT";
-  const state = Buffer.from(
-    JSON.stringify({
-      role
-    })
-  ).toString("base64url");
+  _req.session.oauthRole = _req.query.role === "ADMIN" ? "ADMIN" : "STUDENT";
   return passport.authenticate("google", {
-    scope: ["profile", "email"],
-    state
+    scope: ["openid", "email", "profile"],
+    prompt: "select_account",
+    accessType: "offline",
+    includeGrantedScopes: true
   })(_req, res);
 });
 
@@ -159,15 +156,7 @@ app.get(
       if (!email || !email.endsWith("@hw.uk")) {
         return res.redirect(`${FRONTEND_URL}?authError=domain_not_allowed`);
       }
-      let role = "STUDENT";
-      if (req.query.state) {
-        try {
-          const parsed = JSON.parse(Buffer.from(req.query.state, "base64url").toString("utf8"));
-          if (parsed.role === "ADMIN") role = "ADMIN";
-        } catch (err) {
-          role = "STUDENT";
-        }
-      }
+      const role = req.session.oauthRole === "ADMIN" ? "ADMIN" : "STUDENT";
 
       let user;
       const [existing] = await db.query(
