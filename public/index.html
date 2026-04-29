@@ -11,13 +11,6 @@
 
   <div class="scanlines"></div>
   <div class="gradient-overlay"></div>
-  <div id="campusLabelOverlay" class="campus-label-overlay hidden">
-    <div class="campus-label">Cafeteria</div>
-    <div class="campus-label">Classrooms</div>
-    <div class="campus-label">Innovation Lab</div>
-    <div class="campus-label">Library</div>
-    <div class="campus-label">Placement Cell</div>
-  </div>
   <div id="campusControls" class="campus-controls hidden">
     <button id="exitCampusBtn" class="outline">Exit Campus View</button>
     <button id="openDataBtn" class="outline">Open Real-time Placement Data</button>
@@ -97,17 +90,27 @@
         <div class="row">
           <h2 id="welcomeTitle">Dashboard</h2>
         </div>
-        <div id="summary" class="kpi-grid"></div>
+        <div class="dashboard-tabs">
+          <button id="tabOverview" type="button" class="tab-btn active">Overview</button>
+          <button id="tabData" type="button" class="tab-btn">Placement Data</button>
+          <button id="tabFeatures" type="button" class="tab-btn">Features</button>
+        </div>
 
-        <h3>Recommended Opportunities</h3>
-        <div id="drivesCards" class="drive-card-grid"></div>
+        <section id="overviewPanel">
+          <div id="summary" class="kpi-grid"></div>
+          <h3>Recommended Opportunities</h3>
+          <div id="drivesCards" class="drive-card-grid"></div>
+        </section>
 
-        <div id="dataPanel" class="hidden">
+        <section id="dataPanel" class="hidden">
           <h3 id="roleBlockTitle">Role Data</h3>
           <div id="roleData" class="table-wrap"></div>
-        </div>
-        <h3>Feature Lab</h3>
-        <div id="featureLab" class="feature-lab"></div>
+        </section>
+
+        <section id="featurePanel" class="hidden">
+          <h3>Feature Lab</h3>
+          <div id="featureLab" class="feature-lab"></div>
+        </section>
       </div>
     </section>
   </main>

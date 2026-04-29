@@ -26,12 +26,16 @@ const chip3d = document.getElementById("chip3d");
 const chipRole = document.getElementById("chipRole");
 const chipData = document.getElementById("chipData");
 const chipDisperse = document.getElementById("chipDisperse");
-const campusLabelOverlay = document.getElementById("campusLabelOverlay");
 const campusControls = document.getElementById("campusControls");
 const exitCampusBtn = document.getElementById("exitCampusBtn");
 const openDataBtn = document.getElementById("openDataBtn");
 const appShell = document.querySelector(".shell");
 const featureLab = document.getElementById("featureLab");
+const tabOverview = document.getElementById("tabOverview");
+const tabData = document.getElementById("tabData");
+const tabFeatures = document.getElementById("tabFeatures");
+const overviewPanel = document.getElementById("overviewPanel");
+const featurePanel = document.getElementById("featurePanel");
 const scanlinesLayer = document.querySelector(".scanlines");
 const heroSub = document.querySelector(".hero-sub");
 let modelMode = false;
@@ -147,7 +151,7 @@ function showDashboard() {
   loginCard.classList.add("hidden");
   if (!modelMode) dashboard.classList.remove("hidden");
   welcomeTitle.textContent = `${state.user.name} (${state.user.role})`;
-  if (dataPanel) dataPanel.classList.add("hidden");
+  switchDashboardTab("overview");
   if (profileName) profileName.textContent = state.user.name;
   if (profileRole) profileRole.textContent = state.user.role;
   if (profileEmail) profileEmail.textContent = state.user.email;
@@ -165,7 +169,6 @@ function showDashboard() {
 
 function showLogin() {
   modelMode = false;
-  if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
   if (campusControls) campusControls.classList.add("hidden");
   if (appShell) appShell.classList.remove("hidden");
   dashboard.classList.add("hidden");
@@ -180,14 +183,12 @@ function enterModelMode() {
   dashboard.classList.add("hidden");
   dashboard.style.display = "none";
   loginCard.classList.add("hidden");
-  if (campusLabelOverlay) campusLabelOverlay.classList.remove("hidden");
   if (campusControls) campusControls.classList.remove("hidden");
 }
 
 function exitModelMode() {
   modelMode = false;
   document.body.classList.remove("campus-mode");
-  if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
   if (campusControls) campusControls.classList.add("hidden");
   if (appShell) appShell.classList.remove("hidden");
   if (state.token && state.user) {
@@ -197,6 +198,16 @@ function exitModelMode() {
     dashboard.style.display = "";
     loginCard.classList.remove("hidden");
   }
+}
+
+function switchDashboardTab(tab) {
+  if (!overviewPanel || !dataPanel || !featurePanel) return;
+  overviewPanel.classList.toggle("hidden", tab !== "overview");
+  dataPanel.classList.toggle("hidden", tab !== "data");
+  featurePanel.classList.toggle("hidden", tab !== "features");
+  tabOverview?.classList.toggle("active", tab === "overview");
+  tabData?.classList.toggle("active", tab === "data");
+  tabFeatures?.classList.toggle("active", tab === "features");
 }
 
 async function loadData() {
@@ -537,7 +548,7 @@ chipData?.addEventListener("click", async () => {
   authMsg.textContent = "Refreshing live dashboard data...";
   try {
     await loadData();
-    if (dataPanel) dataPanel.classList.remove("hidden");
+    switchDashboardTab("data");
     authMsg.textContent = "Dashboard data updated.";
   } catch (err) {
     authMsg.textContent = `Data refresh failed: ${err.message}`;
@@ -570,12 +581,16 @@ openDataBtn?.addEventListener("click", async () => {
   authMsg.textContent = "Refreshing live dashboard data...";
   try {
     await loadData();
-    if (dataPanel) dataPanel.classList.remove("hidden");
+    switchDashboardTab("data");
     authMsg.textContent = "Dashboard data updated.";
   } catch (err) {
     authMsg.textContent = `Data refresh failed: ${err.message}`;
   }
 });
+
+tabOverview?.addEventListener("click", () => switchDashboardTab("overview"));
+tabData?.addEventListener("click", () => switchDashboardTab("data"));
+tabFeatures?.addEventListener("click", () => switchDashboardTab("features"));
 
 function featureButton(label, handler, isActive = false) {
   const btn = document.createElement("button");
