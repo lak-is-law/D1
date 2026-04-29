@@ -26,6 +26,7 @@ const chip3d = document.getElementById("chip3d");
 const chipRole = document.getElementById("chipRole");
 const chipData = document.getElementById("chipData");
 const chipDisperse = document.getElementById("chipDisperse");
+const campusLabelOverlay = document.getElementById("campusLabelOverlay");
 let modelMode = false;
 
 function cleanUrlParams() {
@@ -91,6 +92,7 @@ function showDashboard() {
 
 function showLogin() {
   modelMode = false;
+  if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
   dashboard.classList.add("hidden");
   loginCard.classList.remove("hidden");
 }
@@ -98,12 +100,17 @@ function showLogin() {
 function enterModelMode() {
   modelMode = true;
   dashboard.classList.add("hidden");
+  loginCard.classList.add("hidden");
+  if (campusLabelOverlay) campusLabelOverlay.classList.remove("hidden");
 }
 
 function exitModelMode() {
   modelMode = false;
+  if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
   if (state.token && state.user) {
     dashboard.classList.remove("hidden");
+  } else {
+    loginCard.classList.remove("hidden");
   }
 }
 
