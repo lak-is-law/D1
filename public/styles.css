@@ -91,6 +91,27 @@ body.campus-mode #loginCard {
   display: none !important;
 }
 
+body.campus-mode .shell {
+  display: none !important;
+}
+
+.campus-controls {
+  position: fixed;
+  z-index: 7;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.campus-controls .outline {
+  width: auto;
+  margin-top: 0;
+  background: rgba(8, 16, 40, 0.72);
+  border-color: rgba(216, 190, 138, 0.62);
+  color: #f8e3b4;
+}
+
 .shell {
   position: relative;
   z-index: 2;

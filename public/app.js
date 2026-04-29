@@ -27,6 +27,10 @@ const chipRole = document.getElementById("chipRole");
 const chipData = document.getElementById("chipData");
 const chipDisperse = document.getElementById("chipDisperse");
 const campusLabelOverlay = document.getElementById("campusLabelOverlay");
+const campusControls = document.getElementById("campusControls");
+const exitCampusBtn = document.getElementById("exitCampusBtn");
+const openDataBtn = document.getElementById("openDataBtn");
+const appShell = document.querySelector(".shell");
 let modelMode = false;
 
 function cleanUrlParams() {
@@ -93,23 +97,30 @@ function showDashboard() {
 function showLogin() {
   modelMode = false;
   if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
+  if (campusControls) campusControls.classList.add("hidden");
+  if (appShell) appShell.classList.remove("hidden");
   dashboard.classList.add("hidden");
+  dashboard.style.display = "";
   loginCard.classList.remove("hidden");
 }
 
 function enterModelMode() {
   modelMode = true;
   document.body.classList.add("campus-mode");
+  if (appShell) appShell.classList.add("hidden");
   dashboard.classList.add("hidden");
   dashboard.style.display = "none";
   loginCard.classList.add("hidden");
   if (campusLabelOverlay) campusLabelOverlay.classList.remove("hidden");
+  if (campusControls) campusControls.classList.remove("hidden");
 }
 
 function exitModelMode() {
   modelMode = false;
   document.body.classList.remove("campus-mode");
   if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
+  if (campusControls) campusControls.classList.add("hidden");
+  if (appShell) appShell.classList.remove("hidden");
   if (state.token && state.user) {
     dashboard.style.display = "";
     dashboard.classList.remove("hidden");
@@ -497,6 +508,30 @@ chipDisperse?.addEventListener("click", () => {
   campusLabelGroup.visible = true;
   triggerCampusDisperse();
   authMsg.textContent = "Campus view mode enabled with area labels.";
+});
+
+exitCampusBtn?.addEventListener("click", () => {
+  exitModelMode();
+  buildingModelGroup.visible = false;
+});
+
+openDataBtn?.addEventListener("click", async () => {
+  setActiveChip(chipData);
+  exitModelMode();
+  buildingModelGroup.visible = false;
+  campusLabelGroup.visible = false;
+  if (!state.token) {
+    authMsg.textContent = "Login first to load real-time placement data.";
+    return;
+  }
+  authMsg.textContent = "Refreshing live dashboard data...";
+  try {
+    await loadData();
+    if (dataPanel) dataPanel.classList.remove("hidden");
+    authMsg.textContent = "Dashboard data updated.";
+  } catch (err) {
+    authMsg.textContent = `Data refresh failed: ${err.message}`;
+  }
 });
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
