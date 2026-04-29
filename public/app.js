@@ -16,6 +16,7 @@ const dashboard = document.getElementById("dashboard");
 const authMsg = document.getElementById("authMsg");
 const welcomeTitle = document.getElementById("welcomeTitle");
 const roleBlockTitle = document.getElementById("roleBlockTitle");
+const dataPanel = document.getElementById("dataPanel");
 const chip3d = document.getElementById("chip3d");
 const chipRole = document.getElementById("chipRole");
 const chipData = document.getElementById("chipData");
@@ -67,6 +68,7 @@ function showDashboard() {
   loginCard.classList.add("hidden");
   dashboard.classList.remove("hidden");
   welcomeTitle.textContent = `${state.user.name} (${state.user.role})`;
+  if (dataPanel) dataPanel.classList.add("hidden");
 }
 
 function showLogin() {
@@ -245,21 +247,21 @@ scene.add(campusCore);
 
 // Heriot-Watt UK hologram model (stylized landmark cluster)
 const ukModelGroup = new THREE.Group();
-ukModelGroup.position.set(0, -0.2, -1.2);
+ukModelGroup.position.set(0, 0.3, 2.4);
 ukModelGroup.visible = false;
 scene.add(ukModelGroup);
 
 const ukBase = new THREE.Mesh(
-  new THREE.CylinderGeometry(2.3, 2.55, 0.22, 64),
+  new THREE.CylinderGeometry(2.9, 3.2, 0.32, 64),
   new THREE.MeshStandardMaterial({
     color: 0x1a2348,
     emissive: 0x4463ff,
-    emissiveIntensity: 0.35,
+    emissiveIntensity: 0.55,
     metalness: 0.6,
     roughness: 0.3
   })
 );
-ukBase.position.set(0, -0.8, 0);
+ukBase.position.set(0, -1.0, 0);
 ukModelGroup.add(ukBase);
 
 const towerMat = new THREE.MeshPhysicalMaterial({
@@ -273,16 +275,16 @@ const towerMat = new THREE.MeshPhysicalMaterial({
   roughness: 0.25
 });
 
-const tower1 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.4, 0.8), towerMat);
-tower1.position.set(-1.05, 0.45, 0.2);
+const tower1 = new THREE.Mesh(new THREE.BoxGeometry(1.0, 3.2, 1.0), towerMat);
+tower1.position.set(-1.35, 0.85, 0.2);
 ukModelGroup.add(tower1);
 
-const tower2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.9, 0.9), towerMat);
-tower2.position.set(0.15, 0.2, 0.1);
+const tower2 = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.5, 1.1), towerMat);
+tower2.position.set(0.15, 0.55, 0.1);
 ukModelGroup.add(tower2);
 
-const tower3 = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.1, 0.75), towerMat);
-tower3.position.set(1.25, 0.3, -0.05);
+const tower3 = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.9, 0.95), towerMat);
+tower3.position.set(1.5, 0.7, -0.05);
 ukModelGroup.add(tower3);
 
 const arch = new THREE.Mesh(
@@ -298,7 +300,7 @@ const halo = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ color: 0xe7cf9a, transparent: true, opacity: 0.8 })
 );
 halo.rotation.x = Math.PI / 2;
-halo.position.set(0, 0.75, 0);
+halo.position.set(0, 1.2, 0);
 ukModelGroup.add(halo);
 
 let ukModelShowUntil = 0;
@@ -354,6 +356,7 @@ chipData?.addEventListener("click", async () => {
   authMsg.textContent = "Refreshing live dashboard data...";
   try {
     await loadData();
+    if (dataPanel) dataPanel.classList.remove("hidden");
     authMsg.textContent = "Dashboard data updated.";
   } catch (err) {
     authMsg.textContent = `Data refresh failed: ${err.message}`;
@@ -364,8 +367,9 @@ chipDisperse?.addEventListener("click", () => {
   setActiveChip(chipDisperse);
   triggerCampusDisperse();
   ukModelGroup.visible = true;
-  ukModelShowUntil = performance.now() + 9000;
-  authMsg.textContent = "Heriot-Watt UK 3D hologram showcase launched.";
+  ukModelShowUntil = performance.now() + 15000;
+  sceneBoostUntil = performance.now() + 6000;
+  authMsg.textContent = "3D Heriot-Watt buildings showcase launched.";
 });
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
@@ -414,13 +418,13 @@ function animate(t) {
   camera.lookAt(scene.position);
 
   if (performance.now() < ukModelShowUntil) {
-    const remain = (ukModelShowUntil - performance.now()) / 9000;
-    const pulse = 1 + Math.sin(time * 5.5) * 0.06;
+    const remain = (ukModelShowUntil - performance.now()) / 15000;
+    const pulse = 1.12 + Math.sin(time * 5.5) * 0.1;
     ukModelGroup.visible = true;
-    ukModelGroup.rotation.y += 0.013;
-    ukModelGroup.position.y = -0.2 + Math.sin(time * 2.4) * 0.06;
+    ukModelGroup.rotation.y += 0.017;
+    ukModelGroup.position.y = 0.3 + Math.sin(time * 2.4) * 0.12;
     ukModelGroup.scale.setScalar(pulse);
-    halo.material.opacity = 0.55 + (1 - remain) * 0.25 + Math.sin(time * 6.2) * 0.1;
+    halo.material.opacity = 0.7 + (1 - remain) * 0.2 + Math.sin(time * 6.2) * 0.1;
   } else if (ukModelGroup.visible) {
     ukModelGroup.visible = false;
   }
