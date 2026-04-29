@@ -243,6 +243,66 @@ const campusCore = new THREE.Mesh(
 campusCore.position.set(0, -0.1, 0);
 scene.add(campusCore);
 
+// Heriot-Watt UK hologram model (stylized landmark cluster)
+const ukModelGroup = new THREE.Group();
+ukModelGroup.position.set(0, -0.2, -1.2);
+ukModelGroup.visible = false;
+scene.add(ukModelGroup);
+
+const ukBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.3, 2.55, 0.22, 64),
+  new THREE.MeshStandardMaterial({
+    color: 0x1a2348,
+    emissive: 0x4463ff,
+    emissiveIntensity: 0.35,
+    metalness: 0.6,
+    roughness: 0.3
+  })
+);
+ukBase.position.set(0, -0.8, 0);
+ukModelGroup.add(ukBase);
+
+const towerMat = new THREE.MeshPhysicalMaterial({
+  color: 0x9eb6ff,
+  emissive: 0x5c7dff,
+  emissiveIntensity: 0.38,
+  transmission: 0.25,
+  transparent: true,
+  opacity: 0.92,
+  metalness: 0.52,
+  roughness: 0.25
+});
+
+const tower1 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 2.4, 0.8), towerMat);
+tower1.position.set(-1.05, 0.45, 0.2);
+ukModelGroup.add(tower1);
+
+const tower2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.9, 0.9), towerMat);
+tower2.position.set(0.15, 0.2, 0.1);
+ukModelGroup.add(tower2);
+
+const tower3 = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.1, 0.75), towerMat);
+tower3.position.set(1.25, 0.3, -0.05);
+ukModelGroup.add(tower3);
+
+const arch = new THREE.Mesh(
+  new THREE.TorusGeometry(0.48, 0.11, 18, 42, Math.PI),
+  new THREE.MeshStandardMaterial({ color: 0xdcc28d, emissive: 0xa77a2f, emissiveIntensity: 0.42 })
+);
+arch.position.set(0.1, -0.38, 0.55);
+arch.rotation.z = Math.PI;
+ukModelGroup.add(arch);
+
+const halo = new THREE.Mesh(
+  new THREE.TorusGeometry(1.85, 0.045, 12, 120),
+  new THREE.MeshBasicMaterial({ color: 0xe7cf9a, transparent: true, opacity: 0.8 })
+);
+halo.rotation.x = Math.PI / 2;
+halo.position.set(0, 0.75, 0);
+ukModelGroup.add(halo);
+
+let ukModelShowUntil = 0;
+
 let campusDisperse = false;
 let dispersePower = 0;
 let ringHover = false;
@@ -303,7 +363,9 @@ chipData?.addEventListener("click", async () => {
 chipDisperse?.addEventListener("click", () => {
   setActiveChip(chipDisperse);
   triggerCampusDisperse();
-  authMsg.textContent = "Campus disperse effect triggered.";
+  ukModelGroup.visible = true;
+  ukModelShowUntil = performance.now() + 9000;
+  authMsg.textContent = "Heriot-Watt UK 3D hologram showcase launched.";
 });
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
@@ -350,6 +412,18 @@ function animate(t) {
   pointB.position.x = 4 * Math.cos(time * 0.35);
   pointB.position.y = -2 + 2 * Math.sin(time * 0.6);
   camera.lookAt(scene.position);
+
+  if (performance.now() < ukModelShowUntil) {
+    const remain = (ukModelShowUntil - performance.now()) / 9000;
+    const pulse = 1 + Math.sin(time * 5.5) * 0.06;
+    ukModelGroup.visible = true;
+    ukModelGroup.rotation.y += 0.013;
+    ukModelGroup.position.y = -0.2 + Math.sin(time * 2.4) * 0.06;
+    ukModelGroup.scale.setScalar(pulse);
+    halo.material.opacity = 0.55 + (1 - remain) * 0.25 + Math.sin(time * 6.2) * 0.1;
+  } else if (ukModelGroup.visible) {
+    ukModelGroup.visible = false;
+  }
 
   campusGroup.rotation.y = Math.sin(time * 0.2) * 0.12;
   campusGroup.position.y = -0.25 + Math.sin(time * 1.2) * 0.08;
