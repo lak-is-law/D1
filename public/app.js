@@ -684,30 +684,65 @@ function renderFeatureLab() {
   if (!featureLab) return;
   featureLab.innerHTML = "";
   const isAdmin = state.user?.role === "ADMIN";
-  const features = [
-    ["1) Ambient Music", () => { const on = toggleAmbientMusic(); playSfx(360); authMsg.textContent = on ? "Ambient score ON" : "Ambient score OFF"; }],
-    ["2) Interaction SFX", (btn) => { fx.sfx = !fx.sfx; btn.classList.toggle("active", fx.sfx); playSfx(520); }],
-    ["3) Rain FX", (btn) => { fx.rain = !fx.rain; btn.classList.toggle("active", fx.rain); playSfx(300); }],
-    ["4) Starfield FX", (btn) => { fx.stars = !fx.stars; starGroup.visible = fx.stars; btn.classList.toggle("active", fx.stars); playSfx(330); }],
-    ["5) Auto Camera", (btn) => { fx.autopilot = !fx.autopilot; btn.classList.toggle("active", fx.autopilot); }],
-    ["6) Slow Motion", (btn) => { fx.slowmo = !fx.slowmo; btn.classList.toggle("active", fx.slowmo); }],
-    ["7) Hyper Burst", () => { sceneBoostUntil = performance.now() + 9000; playSfx(180, 0.25, "sawtooth"); }],
-    ["8) Neon Pulse", (btn) => { fx.neonPulse = !fx.neonPulse; btn.classList.toggle("active", fx.neonPulse); }],
-    ["9) Wireframe View", (btn) => { fx.wireframe = !fx.wireframe; [...nodes, ...campusBlocks].forEach((m) => { m.material.wireframe = fx.wireframe; }); btn.classList.toggle("active", fx.wireframe); }],
-    ["10) Glitch Scanlines", (btn) => { fx.glitch = !fx.glitch; btn.classList.toggle("active", fx.glitch); }],
-    ["11) Meteor Shower", () => { triggerMeteorShower(); playSfx(250, 0.18, "square"); }],
-    ["12) Campus Spin", () => { campusGroup.rotation.y += Math.PI / 2; playSfx(290); }],
-    ["13) Screenshot PNG", () => { const a = document.createElement("a"); a.href = renderer.domElement.toDataURL("image/png"); a.download = "hw-3d-shot.png"; a.click(); playSfx(500); }],
-    ["14) Voice Announce", () => { speak(`${state.user.role} dashboard activated. Welcome ${state.user.name}`); }],
-    ["15) Typewriter Hero", (btn) => { startTypewriter(); btn.classList.add("active"); playSfx(420); }],
-    ["16) Fullscreen", () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }],
-    ["17) Export Dashboard JSON", () => { exportDashboardData(); playSfx(350); }],
-    ["18) Theme Shift", () => { document.body.style.filter = document.body.style.filter ? "" : "hue-rotate(45deg) saturate(1.15)"; }],
-    ["19) Admin Add Drive Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } addMockDriveCard(); playSfx(460); }],
-    ["20) Admin Remove Added Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } removeLastAddedCard(); playSfx(240); }]
+  const groupedFeatures = [
+    {
+      title: "Audio",
+      items: [
+        ["Ambient Music", () => { const on = toggleAmbientMusic(); playSfx(360); authMsg.textContent = on ? "Ambient score ON" : "Ambient score OFF"; }],
+        ["Interaction SFX", (btn) => { fx.sfx = !fx.sfx; btn.classList.toggle("active", fx.sfx); playSfx(520); }],
+        ["Voice Announce", () => { speak(`${state.user.role} dashboard activated. Welcome ${state.user.name}`); }]
+      ]
+    },
+    {
+      title: "Visual FX",
+      items: [
+        ["Rain FX", (btn) => { fx.rain = !fx.rain; btn.classList.toggle("active", fx.rain); playSfx(300); }],
+        ["Starfield FX", (btn) => { fx.stars = !fx.stars; starGroup.visible = fx.stars; btn.classList.toggle("active", fx.stars); playSfx(330); }],
+        ["Neon Pulse", (btn) => { fx.neonPulse = !fx.neonPulse; btn.classList.toggle("active", fx.neonPulse); }],
+        ["Glitch Scanlines", (btn) => { fx.glitch = !fx.glitch; btn.classList.toggle("active", fx.glitch); }],
+        ["Meteor Shower", () => { triggerMeteorShower(); playSfx(250, 0.18, "square"); }],
+        ["Theme Shift", () => { document.body.style.filter = document.body.style.filter ? "" : "hue-rotate(45deg) saturate(1.15)"; }]
+      ]
+    },
+    {
+      title: "3D Camera & Motion",
+      items: [
+        ["Auto Camera", (btn) => { fx.autopilot = !fx.autopilot; btn.classList.toggle("active", fx.autopilot); }],
+        ["Slow Motion", (btn) => { fx.slowmo = !fx.slowmo; btn.classList.toggle("active", fx.slowmo); }],
+        ["Hyper Burst", () => { sceneBoostUntil = performance.now() + 9000; playSfx(180, 0.25, "sawtooth"); }],
+        ["Wireframe View", (btn) => { fx.wireframe = !fx.wireframe; [...nodes, ...campusBlocks].forEach((m) => { m.material.wireframe = fx.wireframe; }); btn.classList.toggle("active", fx.wireframe); }],
+        ["Campus Spin", () => { campusGroup.rotation.y += Math.PI / 2; playSfx(290); }]
+      ]
+    },
+    {
+      title: "Tools",
+      items: [
+        ["Screenshot PNG", () => { const a = document.createElement("a"); a.href = renderer.domElement.toDataURL("image/png"); a.download = "hw-3d-shot.png"; a.click(); playSfx(500); }],
+        ["Fullscreen", () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }],
+        ["Export Dashboard JSON", () => { exportDashboardData(); playSfx(350); }],
+        ["Typewriter Hero", (btn) => { startTypewriter(); btn.classList.add("active"); playSfx(420); }]
+      ]
+    },
+    {
+      title: "Admin Controls",
+      items: [
+        ["Admin Add Drive Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } addMockDriveCard(); playSfx(460); }],
+        ["Admin Remove Added Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } removeLastAddedCard(); playSfx(240); }]
+      ]
+    }
   ];
-  for (const [name, handler] of features) {
-    featureLab.appendChild(featureButton(name, handler));
+  for (const group of groupedFeatures) {
+    const wrap = document.createElement("section");
+    wrap.className = "feature-group";
+    const title = document.createElement("h4");
+    title.textContent = group.title;
+    const grid = document.createElement("div");
+    grid.className = "feature-group-grid";
+    for (const [name, handler] of group.items) {
+      grid.appendChild(featureButton(name, handler));
+    }
+    wrap.append(title, grid);
+    featureLab.appendChild(wrap);
   }
 }
 

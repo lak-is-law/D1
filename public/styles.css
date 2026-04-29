@@ -472,6 +472,24 @@ th {
 
 .feature-lab {
   display: grid;
+  gap: 0.8rem;
+}
+
+.feature-group {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.feature-group h4 {
+  margin: 0 0 0.45rem;
+  color: #f3deae;
+  font-size: 0.86rem;
+}
+
+.feature-group-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 0.55rem;
 }
