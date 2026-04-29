@@ -184,6 +184,24 @@ app.get(
         user = { user_id: nextId, name, email, role };
       }
 
+      if (role === "STUDENT") {
+        const [studentRows] = await db.query("SELECT student_id FROM STUDENT WHERE user_id = ? LIMIT 1", [
+          user.user_id
+        ]);
+        if (!studentRows.length) {
+          const [nextStudentRows] = await db.query(
+            "SELECT COALESCE(MAX(student_id), 100) + 1 AS next_student_id FROM STUDENT"
+          );
+          const nextStudentId = nextStudentRows[0].next_student_id;
+          const regNo = `HWAUTO${String(nextStudentId).padStart(4, "0")}`;
+          await db.query(
+            `INSERT INTO STUDENT (student_id, user_id, reg_no, department, cgpa, graduation_year, phone)
+             VALUES (?, ?, ?, ?, ?, YEAR(CURDATE()) + 1, NULL)`,
+            [nextStudentId, user.user_id, regNo, "UNASSIGNED", 0.0]
+          );
+        }
+      }
+
       const token = signToken(user);
       const redirectUrl = `${FRONTEND_URL}?token=${encodeURIComponent(token)}&oauth=google`;
       return res.redirect(redirectUrl);
