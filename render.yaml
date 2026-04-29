@@ -11,6 +11,8 @@ services:
         value: 22.11.0
       - key: JWT_SECRET
         generateValue: true
+      - key: FRONTEND_URL
+        value: https://lak-is-law.github.io/D1/
       - key: DB_HOST
         sync: false
       - key: DB_PORT
@@ -21,3 +23,7 @@ services:
         sync: false
       - key: DB_NAME
         value: placement_hw
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

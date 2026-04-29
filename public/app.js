@@ -17,6 +17,21 @@ const authMsg = document.getElementById("authMsg");
 const welcomeTitle = document.getElementById("welcomeTitle");
 const roleBlockTitle = document.getElementById("roleBlockTitle");
 
+function cleanUrlParams() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("token");
+  url.searchParams.delete("oauth");
+  url.searchParams.delete("authError");
+  window.history.replaceState({}, "", url.toString());
+}
+
+function parseJwt(token) {
+  const base64Url = token.split(".")[1];
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+  return JSON.parse(atob(padded));
+}
+
 function api(path, options = {}) {
   if (IS_GITHUB_PAGES && !API_BASE && path.startsWith("/api/")) {
     return Promise.reject(
@@ -104,13 +119,17 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 });
 
 document.getElementById("googleLogin").addEventListener("click", async () => {
-  const data = await api("/api/auth/google");
-  authMsg.textContent = data.message;
+  if (!API_BASE) {
+    authMsg.textContent = "Set backend URL with ?apiBase=https://your-backend-url";
+    return;
+  }
+  const role = document.getElementById("role").value || "STUDENT";
+  window.location.href = `${API_BASE}/api/auth/google?role=${encodeURIComponent(role)}`;
 });
 
 document.getElementById("facebookLogin").addEventListener("click", async () => {
   const data = await api("/api/auth/facebook");
-  authMsg.textContent = data.message;
+  authMsg.textContent = `${data.message} (Google is fully enabled now)`;
 });
 
 // 3D dynamic CGI-like background
@@ -364,4 +383,32 @@ if (state.token && state.user) {
   });
 } else {
   showLogin();
+}
+
+const oauthToken = params.get("token");
+const oauthError = params.get("authError");
+if (oauthError) {
+  authMsg.textContent = `OAuth error: ${oauthError}`;
+  cleanUrlParams();
+} else if (oauthToken) {
+  state.token = oauthToken;
+  localStorage.setItem("hw_token", state.token);
+  api("/api/dashboard/summary")
+    .then(() => {
+      const payload = parseJwt(state.token);
+      state.user = {
+        user_id: payload.user_id,
+        name: payload.name,
+        email: payload.email,
+        role: payload.role
+      };
+      localStorage.setItem("hw_user", JSON.stringify(state.user));
+      showDashboard();
+      return loadData();
+    })
+    .catch((err) => {
+      authMsg.textContent = `OAuth sign-in failed: ${err.message}`;
+      showLogin();
+    })
+    .finally(() => cleanUrlParams());
 }

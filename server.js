@@ -2,6 +2,9 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const session = require("express-session");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 require("dotenv").config();
 
 const db = require("./db");
@@ -9,10 +12,40 @@ const db = require("./db");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 
 app.use(cors());
 app.use(express.json());
+app.use(
+  session({
+    secret: JWT_SECRET,
+    resave: false,
+    saveUninitialized: false
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(express.static(path.join(__dirname, "public")));
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+
+if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        callbackURL: "/api/auth/google/callback"
+      },
+      (accessToken, refreshToken, profile, done) => {
+        done(null, profile);
+      }
+    )
+  );
+}
 
 function signToken(user) {
   return jwt.sign(
@@ -81,10 +114,21 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 app.get("/api/auth/google", (_req, res) => {
-  res.json({
-    provider: "google",
-    message: "OAuth hook ready. Configure Google client and callback on backend."
-  });
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    return res.status(500).json({
+      message: "Google OAuth is not configured on backend"
+    });
+  }
+  const role = _req.query.role === "ADMIN" ? "ADMIN" : "STUDENT";
+  const state = Buffer.from(
+    JSON.stringify({
+      role
+    })
+  ).toString("base64url");
+  return passport.authenticate("google", {
+    scope: ["profile", "email"],
+    state
+  })(_req, res);
 });
 
 app.get("/api/auth/facebook", (_req, res) => {
@@ -93,6 +137,64 @@ app.get("/api/auth/facebook", (_req, res) => {
     message: "OAuth hook ready. Configure Facebook app credentials and callback."
   });
 });
+
+app.get(
+  "/api/auth/google/callback",
+  (req, res, next) => {
+    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+      return res.redirect(`${FRONTEND_URL}?authError=google_not_configured`);
+    }
+    return next();
+  },
+  passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}?authError=google_failed` }),
+  async (req, res) => {
+    try {
+      const profile = req.user;
+      const email = profile?.emails?.[0]?.value?.toLowerCase();
+      const name = profile?.displayName || "Google User";
+      if (!email || !email.endsWith("@hw.uk")) {
+        return res.redirect(`${FRONTEND_URL}?authError=domain_not_allowed`);
+      }
+      let role = "STUDENT";
+      if (req.query.state) {
+        try {
+          const parsed = JSON.parse(Buffer.from(req.query.state, "base64url").toString("utf8"));
+          if (parsed.role === "ADMIN") role = "ADMIN";
+        } catch (err) {
+          role = "STUDENT";
+        }
+      }
+
+      let user;
+      const [existing] = await db.query(
+        "SELECT user_id, name, email, role, password FROM USERS WHERE email = ? LIMIT 1",
+        [email]
+      );
+      if (existing.length) {
+        user = existing[0];
+        if (user.role !== role) {
+          await db.query("UPDATE USERS SET role = ?, name = ? WHERE user_id = ?", [role, name, user.user_id]);
+          user.role = role;
+          user.name = name;
+        }
+      } else {
+        const [maxRows] = await db.query("SELECT COALESCE(MAX(user_id), 0) + 1 AS next_id FROM USERS");
+        const nextId = maxRows[0].next_id;
+        await db.query(
+          "INSERT INTO USERS (user_id, name, email, password, role) VALUES (?, ?, ?, ?, ?)",
+          [nextId, name, email, "google_oauth", role]
+        );
+        user = { user_id: nextId, name, email, role };
+      }
+
+      const token = signToken(user);
+      const redirectUrl = `${FRONTEND_URL}?token=${encodeURIComponent(token)}&oauth=google`;
+      return res.redirect(redirectUrl);
+    } catch (err) {
+      return res.redirect(`${FRONTEND_URL}?authError=${encodeURIComponent(err.message)}`);
+    }
+  }
+);
 
 app.get("/api/dashboard/summary", auth(), async (_req, res) => {
   try {
