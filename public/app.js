@@ -107,6 +107,39 @@ function exitModelMode() {
   }
 }
 
+function makeLabelSprite(text) {
+  const canvasEl = document.createElement("canvas");
+  canvasEl.width = 512;
+  canvasEl.height = 128;
+  const ctx = canvasEl.getContext("2d");
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+  ctx.fillStyle = "rgba(8, 16, 40, 0.72)";
+  ctx.strokeStyle = "rgba(216, 190, 138, 0.95)";
+  ctx.lineWidth = 4;
+  const r = 24;
+  ctx.beginPath();
+  ctx.moveTo(r, 2);
+  ctx.arcTo(canvasEl.width - 2, 2, canvasEl.width - 2, canvasEl.height - 2, r);
+  ctx.arcTo(canvasEl.width - 2, canvasEl.height - 2, 2, canvasEl.height - 2, r);
+  ctx.arcTo(2, canvasEl.height - 2, 2, 2, r);
+  ctx.arcTo(2, 2, canvasEl.width - 2, 2, r);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f8e3b4";
+  ctx.font = "700 40px Inter, Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, canvasEl.width / 2, canvasEl.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvasEl);
+  texture.needsUpdate = true;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.8, 0.45, 1);
+  return sprite;
+}
+
 async function loadData() {
   const [summary, drives] = await Promise.all([api("/api/dashboard/summary"), api("/api/drives")]);
   document.getElementById("summary").innerHTML = Object.entries(summary)
@@ -290,6 +323,24 @@ const campusCore = new THREE.Mesh(
 campusCore.position.set(0, -0.1, 0);
 scene.add(campusCore);
 
+const campusLabelGroup = new THREE.Group();
+campusLabelGroup.visible = false;
+scene.add(campusLabelGroup);
+
+const campusLabels = [
+  { text: "Cafeteria", pos: new THREE.Vector3(-2.2, 0.95, 1.1) },
+  { text: "Classrooms", pos: new THREE.Vector3(1.2, 1.2, 0.9) },
+  { text: "Innovation Lab", pos: new THREE.Vector3(0.1, 1.6, -0.2) },
+  { text: "Library", pos: new THREE.Vector3(-0.9, 1.35, -0.8) },
+  { text: "Placement Cell", pos: new THREE.Vector3(2.1, 0.9, 0.25) }
+];
+const labelSprites = campusLabels.map((entry) => {
+  const sprite = makeLabelSprite(entry.text);
+  sprite.position.copy(entry.pos);
+  campusLabelGroup.add(sprite);
+  return sprite;
+});
+
 // Modern Heriot-Watt-inspired building model (image-based style)
 const buildingModelGroup = new THREE.Group();
 buildingModelGroup.position.set(0, -0.1, 2.6);
@@ -411,6 +462,7 @@ chipData?.addEventListener("click", async () => {
   setActiveChip(chipData);
   exitModelMode();
   buildingModelGroup.visible = false;
+  campusLabelGroup.visible = false;
   if (!state.token) {
     authMsg.textContent = "Login first to load real-time placement data.";
     return;
@@ -429,8 +481,10 @@ chipDisperse?.addEventListener("click", () => {
   setActiveChip(chipDisperse);
   enterModelMode();
   if (dataPanel) dataPanel.classList.add("hidden");
+  buildingModelGroup.visible = false;
+  campusLabelGroup.visible = true;
   triggerCampusDisperse();
-  authMsg.textContent = "Campus disperse effect triggered.";
+  authMsg.textContent = "Campus view mode enabled with area labels.";
 });
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
@@ -483,6 +537,14 @@ function animate(t) {
     buildingModelGroup.position.y = -0.1 + Math.sin(time * 1.8) * 0.06;
     const s = 1.05 + Math.sin(time * 3.2) * 0.03;
     buildingModelGroup.scale.set(s, s, s);
+  }
+
+  if (campusLabelGroup.visible) {
+    campusLabelGroup.position.copy(campusGroup.position);
+    campusLabelGroup.rotation.y = campusGroup.rotation.y * 0.6;
+    for (const s of labelSprites) {
+      s.material.opacity = 0.86 + Math.sin(time * 3.1 + s.position.x) * 0.08;
+    }
   }
 
   campusGroup.rotation.y = Math.sin(time * 0.2) * 0.12;
