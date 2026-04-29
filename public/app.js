@@ -99,17 +99,22 @@ function showLogin() {
 
 function enterModelMode() {
   modelMode = true;
+  document.body.classList.add("campus-mode");
   dashboard.classList.add("hidden");
+  dashboard.style.display = "none";
   loginCard.classList.add("hidden");
   if (campusLabelOverlay) campusLabelOverlay.classList.remove("hidden");
 }
 
 function exitModelMode() {
   modelMode = false;
+  document.body.classList.remove("campus-mode");
   if (campusLabelOverlay) campusLabelOverlay.classList.add("hidden");
   if (state.token && state.user) {
+    dashboard.style.display = "";
     dashboard.classList.remove("hidden");
   } else {
+    dashboard.style.display = "";
     loginCard.classList.remove("hidden");
   }
 }

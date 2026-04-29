@@ -59,7 +59,7 @@ body {
 .campus-label-overlay {
   position: fixed;
   inset: 0;
-  z-index: 3;
+  z-index: 6;
   pointer-events: none;
 }
 
@@ -84,6 +84,11 @@ body {
 @keyframes campusPulse {
   0%, 100% { transform: translateY(0); opacity: 0.88; }
   50% { transform: translateY(-3px); opacity: 1; }
+}
+
+body.campus-mode #dashboard,
+body.campus-mode #loginCard {
+  display: none !important;
 }
 
 .shell {
