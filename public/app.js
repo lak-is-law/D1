@@ -17,6 +17,11 @@ const authMsg = document.getElementById("authMsg");
 const welcomeTitle = document.getElementById("welcomeTitle");
 const roleBlockTitle = document.getElementById("roleBlockTitle");
 const dataPanel = document.getElementById("dataPanel");
+const profileName = document.getElementById("profileName");
+const profileRole = document.getElementById("profileRole");
+const profileEmail = document.getElementById("profileEmail");
+const profileAvatar = document.getElementById("profileAvatar");
+const drivesCards = document.getElementById("drivesCards");
 const chip3d = document.getElementById("chip3d");
 const chipRole = document.getElementById("chipRole");
 const chipData = document.getElementById("chipData");
@@ -70,6 +75,18 @@ function showDashboard() {
   if (!modelMode) dashboard.classList.remove("hidden");
   welcomeTitle.textContent = `${state.user.name} (${state.user.role})`;
   if (dataPanel) dataPanel.classList.add("hidden");
+  if (profileName) profileName.textContent = state.user.name;
+  if (profileRole) profileRole.textContent = state.user.role;
+  if (profileEmail) profileEmail.textContent = state.user.email;
+  if (profileAvatar) {
+    const initials = state.user.name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0]?.toUpperCase() || "")
+      .join("");
+    profileAvatar.textContent = initials || "HW";
+  }
 }
 
 function showLogin() {
@@ -95,7 +112,21 @@ async function loadData() {
   document.getElementById("summary").innerHTML = Object.entries(summary)
     .map(([k, v]) => `<div class="kpi"><div class="label">${k.replaceAll("_", " ")}</div><div class="value">${v}</div></div>`)
     .join("");
-  document.getElementById("drivesTable").innerHTML = htmlTable(drives);
+  if (drivesCards) {
+    drivesCards.innerHTML = drives
+      .slice(0, 8)
+      .map(
+        (d) => `
+          <article class="drive-card">
+            <h4>${d.company_name}</h4>
+            <p>${d.role}</p>
+            <p>Package: ${d.package_lpa} LPA</p>
+            <p>Eligibility CGPA: ${d.eligibility_cgpa}</p>
+          </article>
+        `
+      )
+      .join("");
+  }
 
   if (state.user.role === "ADMIN") {
     roleBlockTitle.textContent = "Confidential Results (Admin)";

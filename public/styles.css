@@ -390,6 +390,60 @@ th {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.dashboard-shell {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 1rem;
+}
+
+.profile-panel {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 1rem;
+  background: linear-gradient(180deg, rgba(96, 124, 255, 0.18), rgba(255, 255, 255, 0.03));
+}
+
+.avatar-circle {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, #89a8ff, #d8be8a);
+  color: #0b1122;
+  margin-bottom: 0.6rem;
+}
+
+.dashboard-main {
+  min-width: 0;
+}
+
+.drive-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.65rem;
+}
+
+.drive-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.drive-card h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.drive-card p {
+  margin: 0.15rem 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+
 @media (max-width: 700px) {
   .oauth {
     grid-template-columns: 1fr;
@@ -412,6 +466,10 @@ th {
   }
 
   .stat-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-shell {
     grid-template-columns: 1fr;
   }
 }

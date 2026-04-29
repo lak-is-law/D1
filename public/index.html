@@ -72,17 +72,28 @@
       </div>
     </section>
 
-    <section id="dashboard" class="card glass hidden">
-      <div class="row">
-        <h2 id="welcomeTitle">Dashboard</h2>
+    <section id="dashboard" class="card glass hidden dashboard-shell">
+      <aside class="profile-panel">
+        <div class="avatar-circle" id="profileAvatar">HW</div>
+        <h3 id="profileName">Candidate</h3>
+        <p class="muted" id="profileRole">STUDENT</p>
+        <p class="muted small" id="profileEmail">name@hw.uk</p>
         <button id="logoutBtn" class="outline">Logout</button>
-      </div>
-      <div id="summary" class="kpi-grid"></div>
-      <div id="dataPanel" class="hidden">
-        <h3>Recent Drives</h3>
-        <div id="drivesTable" class="table-wrap"></div>
-        <h3 id="roleBlockTitle">Role Data</h3>
-        <div id="roleData" class="table-wrap"></div>
+      </aside>
+
+      <div class="dashboard-main">
+        <div class="row">
+          <h2 id="welcomeTitle">Dashboard</h2>
+        </div>
+        <div id="summary" class="kpi-grid"></div>
+
+        <h3>Recommended Opportunities</h3>
+        <div id="drivesCards" class="drive-card-grid"></div>
+
+        <div id="dataPanel" class="hidden">
+          <h3 id="roleBlockTitle">Role Data</h3>
+          <div id="roleData" class="table-wrap"></div>
+        </div>
       </div>
     </section>
   </main>
