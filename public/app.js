@@ -427,6 +427,8 @@ chipData?.addEventListener("click", async () => {
 
 chipDisperse?.addEventListener("click", () => {
   setActiveChip(chipDisperse);
+  enterModelMode();
+  if (dataPanel) dataPanel.classList.add("hidden");
   triggerCampusDisperse();
   authMsg.textContent = "Campus disperse effect triggered.";
 });
