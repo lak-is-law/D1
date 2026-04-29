@@ -305,6 +305,11 @@ button:hover {
   color: var(--muted);
 }
 
+.small {
+  font-size: 0.8rem;
+  margin-top: 0.7rem;
+}
+
 .hidden {
   display: none;
 }

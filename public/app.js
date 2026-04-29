@@ -3,6 +3,14 @@ const state = {
   user: JSON.parse(localStorage.getItem("hw_user") || "null")
 };
 
+const params = new URLSearchParams(window.location.search);
+const queryApiBase = params.get("apiBase");
+if (queryApiBase) {
+  localStorage.setItem("hw_api_base", queryApiBase.replace(/\/+$/, ""));
+}
+const API_BASE = (queryApiBase || localStorage.getItem("hw_api_base") || "").replace(/\/+$/, "");
+const IS_GITHUB_PAGES = window.location.hostname.endsWith("github.io");
+
 const loginCard = document.getElementById("loginCard");
 const dashboard = document.getElementById("dashboard");
 const authMsg = document.getElementById("authMsg");
@@ -10,9 +18,15 @@ const welcomeTitle = document.getElementById("welcomeTitle");
 const roleBlockTitle = document.getElementById("roleBlockTitle");
 
 function api(path, options = {}) {
+  if (IS_GITHUB_PAGES && !API_BASE && path.startsWith("/api/")) {
+    return Promise.reject(
+      new Error("Backend not configured. Open with ?apiBase=https://your-backend-url")
+    );
+  }
   const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
-  return fetch(path, { ...options, headers }).then(async (res) => {
+  const url = `${API_BASE}${path}`;
+  return fetch(url, { ...options, headers }).then(async (res) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || "Request failed");
     return data;
