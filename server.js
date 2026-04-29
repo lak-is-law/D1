@@ -36,6 +36,13 @@ const DEMO_USERS = [
     demo: true
   }
 ];
+const DEMO_DRIVES = [
+  { drive_id: 501, company_name: "Google", role: "Software Engineer", package_lpa: 28, drive_date: "2026-01-20", eligibility_cgpa: 8.5 },
+  { drive_id: 502, company_name: "Amazon", role: "SDE-1", package_lpa: 24, drive_date: "2026-01-25", eligibility_cgpa: 8.2 },
+  { drive_id: 503, company_name: "Infosys", role: "Systems Engineer", package_lpa: 4.2, drive_date: "2026-01-28", eligibility_cgpa: 7.0 },
+  { drive_id: 504, company_name: "TCS", role: "Digital Engineer", package_lpa: 7.0, drive_date: "2026-02-01", eligibility_cgpa: 6.8 }
+];
+const DEMO_AUDIT = [];
 
 app.set("trust proxy", 1);
 app.use(cors());
@@ -124,6 +131,16 @@ app.post("/api/auth/login", async (req, res) => {
 
   const demoUser = getDemoUser(email, password, role);
   if (demoUser) {
+    DEMO_AUDIT.unshift({
+      audit_id: DEMO_AUDIT.length + 1,
+      user_id: demoUser.user_id,
+      username: demoUser.email.split("@")[0],
+      user_type: demoUser.role,
+      login_success: 1,
+      login_time_ist: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      login_date_ist: new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }),
+      ip_address: req.ip || "127.0.0.1"
+    });
     const token = signToken(demoUser);
     return res.json({
       token,
@@ -395,40 +412,7 @@ app.get("/api/dashboard/student/me", auth("STUDENT"), async (req, res) => {
 
 app.get("/api/drives", auth(), async (_req, res) => {
   if (_req.user.demo) {
-    return res.json([
-      {
-        drive_id: 501,
-        company_name: "Google",
-        role: "Software Engineer",
-        package_lpa: 28,
-        drive_date: "2026-01-20",
-        eligibility_cgpa: 8.5
-      },
-      {
-        drive_id: 502,
-        company_name: "Amazon",
-        role: "SDE-1",
-        package_lpa: 24,
-        drive_date: "2026-01-25",
-        eligibility_cgpa: 8.2
-      },
-      {
-        drive_id: 503,
-        company_name: "Infosys",
-        role: "Systems Engineer",
-        package_lpa: 4.2,
-        drive_date: "2026-01-28",
-        eligibility_cgpa: 7.0
-      },
-      {
-        drive_id: 504,
-        company_name: "TCS",
-        role: "Digital Engineer",
-        package_lpa: 7.0,
-        drive_date: "2026-02-01",
-        eligibility_cgpa: 6.8
-      }
-    ]);
+    return res.json(DEMO_DRIVES);
   }
   try {
     const [rows] = await db.query(
@@ -441,6 +425,63 @@ app.get("/api/drives", auth(), async (_req, res) => {
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
+});
+
+app.get("/api/dashboard/audit", auth(), async (req, res) => {
+  if (req.user.demo) {
+    return res.json(DEMO_AUDIT);
+  }
+  try {
+    const [rows] = await db.query(
+      `SELECT
+         la.audit_id,
+         la.user_id,
+         u.email AS username,
+         u.role AS user_type,
+         la.login_success,
+         CONVERT_TZ(la.login_time_utc, '+00:00', '+05:30') AS login_time_ist,
+         DATE(CONVERT_TZ(la.login_time_utc, '+00:00', '+05:30')) AS login_date_ist,
+         la.ip_address
+       FROM LOGIN_AUDIT la
+       JOIN USERS u ON u.user_id = la.user_id
+       ORDER BY la.audit_id DESC
+       LIMIT 100`
+    );
+    return res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/api/admin/drives", auth("ADMIN"), async (req, res) => {
+  const { company_name, role, package_lpa, drive_date, eligibility_cgpa } = req.body || {};
+  if (!company_name || !role || package_lpa == null || !drive_date || eligibility_cgpa == null) {
+    return res.status(400).json({ message: "Missing drive fields" });
+  }
+  if (req.user.demo) {
+    const nextId = (DEMO_DRIVES.at(-1)?.drive_id || 500) + 1;
+    const item = { drive_id: nextId, company_name, role, package_lpa: Number(package_lpa), drive_date, eligibility_cgpa: Number(eligibility_cgpa) };
+    DEMO_DRIVES.push(item);
+    return res.json({ message: "Drive added", drive: item });
+  }
+  return res.status(501).json({ message: "Write mode for non-demo DB not enabled in this build" });
+});
+
+app.post("/api/admin/users", auth("ADMIN"), async (req, res) => {
+  const { name, email, password, role } = req.body || {};
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ message: "Missing user fields" });
+  }
+  if (!email.endsWith("@hw.uk")) {
+    return res.status(400).json({ message: "Email must end with @hw.uk" });
+  }
+  if (req.user.demo) {
+    const nextId = (DEMO_USERS.at(-1)?.user_id || 100002) + 1;
+    const user = { user_id: nextId, name, email, password, role, demo: true };
+    DEMO_USERS.push(user);
+    return res.json({ message: "User added (demo mode)", user: { user_id: nextId, name, email, role } });
+  }
+  return res.status(501).json({ message: "Write mode for non-demo DB not enabled in this build" });
 });
 
 app.get("/api/health", (_req, res) => {

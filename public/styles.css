@@ -538,6 +538,17 @@ th {
   background: rgba(216, 190, 138, 0.14);
 }
 
+.inline-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.inline-form button {
+  margin-top: 0;
+}
+
 @media (max-width: 700px) {
   .oauth {
     grid-template-columns: 1fr;

@@ -31,6 +31,11 @@ const exitCampusBtn = document.getElementById("exitCampusBtn");
 const openDataBtn = document.getElementById("openDataBtn");
 const appShell = document.querySelector(".shell");
 const featureLab = document.getElementById("featureLab");
+const drivesTable = document.getElementById("drivesTable");
+const auditTable = document.getElementById("auditTable");
+const adminWritePanel = document.getElementById("adminWritePanel");
+const addDriveForm = document.getElementById("addDriveForm");
+const addUserForm = document.getElementById("addUserForm");
 const tabOverview = document.getElementById("tabOverview");
 const tabData = document.getElementById("tabData");
 const tabFeatures = document.getElementById("tabFeatures");
@@ -211,7 +216,11 @@ function switchDashboardTab(tab) {
 }
 
 async function loadData() {
-  const [summary, drives] = await Promise.all([api("/api/dashboard/summary"), api("/api/drives")]);
+  const [summary, drives, audit] = await Promise.all([
+    api("/api/dashboard/summary"),
+    api("/api/drives"),
+    api("/api/dashboard/audit").catch(() => [])
+  ]);
   document.getElementById("summary").innerHTML = Object.entries(summary)
     .map(([k, v]) => `<div class="kpi"><div class="label">${k.replaceAll("_", " ")}</div><div class="value">${v}</div></div>`)
     .join("");
@@ -230,15 +239,19 @@ async function loadData() {
       )
       .join("");
   }
+  if (drivesTable) drivesTable.innerHTML = htmlTable(drives);
+  if (auditTable) auditTable.innerHTML = htmlTable(audit);
 
   if (state.user.role === "ADMIN") {
     roleBlockTitle.textContent = "Confidential Results (Admin)";
     const conf = await api("/api/dashboard/admin/confidential");
     document.getElementById("roleData").innerHTML = htmlTable(conf);
+    if (adminWritePanel) adminWritePanel.classList.remove("hidden");
   } else {
     roleBlockTitle.textContent = "My Placement Progress (Student)";
     const me = await api("/api/dashboard/student/me");
     document.getElementById("roleData").innerHTML = htmlTable(me);
+    if (adminWritePanel) adminWritePanel.classList.add("hidden");
   }
 }
 
@@ -591,6 +604,47 @@ openDataBtn?.addEventListener("click", async () => {
 tabOverview?.addEventListener("click", () => switchDashboardTab("overview"));
 tabData?.addEventListener("click", () => switchDashboardTab("data"));
 tabFeatures?.addEventListener("click", () => switchDashboardTab("features"));
+
+addDriveForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await api("/api/admin/drives", {
+      method: "POST",
+      body: JSON.stringify({
+        company_name: document.getElementById("driveCompany").value.trim(),
+        role: document.getElementById("driveRole").value.trim(),
+        package_lpa: Number(document.getElementById("drivePackage").value),
+        drive_date: document.getElementById("driveDate").value,
+        eligibility_cgpa: Number(document.getElementById("driveCgpa").value)
+      })
+    });
+    authMsg.textContent = "Drive added successfully.";
+    addDriveForm.reset();
+    await loadData();
+    switchDashboardTab("data");
+  } catch (err) {
+    authMsg.textContent = `Add drive failed: ${err.message}`;
+  }
+});
+
+addUserForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await api("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify({
+        name: document.getElementById("newUserName").value.trim(),
+        email: document.getElementById("newUserEmail").value.trim(),
+        role: document.getElementById("newUserRole").value,
+        password: document.getElementById("newUserPassword").value
+      })
+    });
+    authMsg.textContent = "User added successfully.";
+    addUserForm.reset();
+  } catch (err) {
+    authMsg.textContent = `Add user failed: ${err.message}`;
+  }
+});
 
 function featureButton(label, handler, isActive = false) {
   const btn = document.createElement("button");

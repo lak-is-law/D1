@@ -103,8 +103,33 @@
         </section>
 
         <section id="dataPanel" class="hidden">
+          <h3>Placement Drives Table</h3>
+          <div id="drivesTable" class="table-wrap"></div>
           <h3 id="roleBlockTitle">Role Data</h3>
           <div id="roleData" class="table-wrap"></div>
+          <h3>Login Audit Table (IST)</h3>
+          <div id="auditTable" class="table-wrap"></div>
+          <div id="adminWritePanel" class="hidden">
+            <h3>Admin Data Entry</h3>
+            <form id="addDriveForm" class="inline-form">
+              <input id="driveCompany" placeholder="Company Name" required />
+              <input id="driveRole" placeholder="Role" required />
+              <input id="drivePackage" type="number" step="0.1" placeholder="Package LPA" required />
+              <input id="driveDate" type="date" required />
+              <input id="driveCgpa" type="number" step="0.1" placeholder="Eligibility CGPA" required />
+              <button type="submit">Add Drive</button>
+            </form>
+            <form id="addUserForm" class="inline-form">
+              <input id="newUserName" placeholder="Full Name" required />
+              <input id="newUserEmail" type="email" placeholder="user@hw.uk" required />
+              <select id="newUserRole" required>
+                <option value="STUDENT">Student</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+              <input id="newUserPassword" placeholder="Password" required />
+              <button type="submit">Add User</button>
+            </form>
+          </div>
         </section>
 
         <section id="featurePanel" class="hidden">
