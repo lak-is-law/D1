@@ -18,6 +18,24 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_CALLBACK_URL =
   process.env.GOOGLE_CALLBACK_URL || "https://d1-backend-x7eg.onrender.com/api/auth/google/callback";
 const GOOGLE_ALLOWED_DOMAIN = (process.env.GOOGLE_ALLOWED_DOMAIN || "").trim().toLowerCase();
+const DEMO_USERS = [
+  {
+    user_id: 100001,
+    name: "Admin Demo",
+    email: "admin.demo@hw.uk",
+    password: "admin123",
+    role: "ADMIN",
+    demo: true
+  },
+  {
+    user_id: 100002,
+    name: "Student Demo",
+    email: "student.demo@hw.uk",
+    password: "student123",
+    role: "STUDENT",
+    demo: true
+  }
+];
 
 app.set("trust proxy", 1);
 app.use(cors());
@@ -58,10 +76,22 @@ function signToken(user) {
       user_id: user.user_id,
       role: user.role,
       email: user.email,
-      name: user.name
+      name: user.name,
+      demo: Boolean(user.demo)
     },
     JWT_SECRET,
     { expiresIn: "8h" }
+  );
+}
+
+function getDemoUser(email, password, role) {
+  return (
+    DEMO_USERS.find(
+      (u) =>
+        u.email.toLowerCase() === String(email || "").toLowerCase() &&
+        u.password === password &&
+        u.role === role
+    ) || null
   );
 }
 
@@ -90,6 +120,21 @@ app.post("/api/auth/login", async (req, res) => {
   }
   if (!email.endsWith("@hw.uk")) {
     return res.status(400).json({ message: "Use Heriot-Watt domain (@hw.uk)" });
+  }
+
+  const demoUser = getDemoUser(email, password, role);
+  if (demoUser) {
+    const token = signToken(demoUser);
+    return res.json({
+      token,
+      user: {
+        user_id: demoUser.user_id,
+        name: demoUser.name,
+        role: demoUser.role,
+        email: demoUser.email,
+        demo: true
+      }
+    });
   }
 
   try {
@@ -212,6 +257,14 @@ app.get(
 );
 
 app.get("/api/dashboard/summary", auth(), async (_req, res) => {
+  if (_req.user.demo) {
+    return res.json({
+      total_students: 240,
+      total_drives: 18,
+      total_applications: 612,
+      selected_results: 133
+    });
+  }
   try {
     const [studentsQ, drivesQ, appsQ, offersQ] = await Promise.all([
       db.query("SELECT COUNT(*) AS count FROM STUDENT"),
@@ -231,6 +284,37 @@ app.get("/api/dashboard/summary", auth(), async (_req, res) => {
 });
 
 app.get("/api/dashboard/admin/confidential", auth("ADMIN"), async (_req, res) => {
+  if (_req.user.demo) {
+    return res.json([
+      {
+        student_name: "Ananya Verma",
+        email: "ananya.verma@hw.uk",
+        cgpa: 9.1,
+        company_name: "Google",
+        role: "Software Engineer",
+        final_status: "SELECTED",
+        offer_ctc_lpa: 28
+      },
+      {
+        student_name: "Vikram Singh",
+        email: "vikram.singh@hw.uk",
+        cgpa: 9.3,
+        company_name: "Microsoft",
+        role: "Software Engineer I",
+        final_status: "SELECTED",
+        offer_ctc_lpa: 22
+      },
+      {
+        student_name: "Meera Pillai",
+        email: "meera.pillai@hw.uk",
+        cgpa: 8.5,
+        company_name: "Infosys",
+        role: "Systems Engineer",
+        final_status: "WAITLISTED",
+        offer_ctc_lpa: 4.2
+      }
+    ]);
+  }
   try {
     const [rows] = await db.query(
       `SELECT
@@ -257,6 +341,30 @@ app.get("/api/dashboard/admin/confidential", auth("ADMIN"), async (_req, res) =>
 });
 
 app.get("/api/dashboard/student/me", auth("STUDENT"), async (req, res) => {
+  if (req.user.demo) {
+    return res.json([
+      {
+        student_name: "Student Demo",
+        department: "CSE",
+        cgpa: 8.7,
+        company_name: "Amazon",
+        role: "SDE-1",
+        application_status: "SHORTLISTED",
+        final_status: "PENDING",
+        offer_ctc_lpa: null
+      },
+      {
+        student_name: "Student Demo",
+        department: "CSE",
+        cgpa: 8.7,
+        company_name: "TCS",
+        role: "Digital Engineer",
+        application_status: "SELECTED",
+        final_status: "SELECTED",
+        offer_ctc_lpa: 7.0
+      }
+    ]);
+  }
   try {
     const [rows] = await db.query(
       `SELECT
@@ -286,6 +394,42 @@ app.get("/api/dashboard/student/me", auth("STUDENT"), async (req, res) => {
 });
 
 app.get("/api/drives", auth(), async (_req, res) => {
+  if (_req.user.demo) {
+    return res.json([
+      {
+        drive_id: 501,
+        company_name: "Google",
+        role: "Software Engineer",
+        package_lpa: 28,
+        drive_date: "2026-01-20",
+        eligibility_cgpa: 8.5
+      },
+      {
+        drive_id: 502,
+        company_name: "Amazon",
+        role: "SDE-1",
+        package_lpa: 24,
+        drive_date: "2026-01-25",
+        eligibility_cgpa: 8.2
+      },
+      {
+        drive_id: 503,
+        company_name: "Infosys",
+        role: "Systems Engineer",
+        package_lpa: 4.2,
+        drive_date: "2026-01-28",
+        eligibility_cgpa: 7.0
+      },
+      {
+        drive_id: 504,
+        company_name: "TCS",
+        role: "Digital Engineer",
+        package_lpa: 7.0,
+        drive_date: "2026-02-01",
+        eligibility_cgpa: 6.8
+      }
+    ]);
+  }
   try {
     const [rows] = await db.query(
       `SELECT d.drive_id, c.company_name, d.role, d.package_lpa, d.drive_date, d.eligibility_cgpa

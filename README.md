@@ -47,3 +47,12 @@ Google OAuth is now fully wired.
 ### 3) Redeploy Render service
 
 Then Google Sign-In from the frontend login card will work and return users to Pages with JWT automatically.
+
+## Emergency demo login (no DB dependency)
+
+If database connectivity fails, use these organic login credentials:
+
+- Admin: `admin.demo@hw.uk` / `admin123` / role `ADMIN`
+- Student: `student.demo@hw.uk` / `student123` / role `STUDENT`
+
+These accounts return demo dashboard data for presentation-safe walkthroughs.
