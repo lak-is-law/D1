@@ -21,6 +21,7 @@ const chip3d = document.getElementById("chip3d");
 const chipRole = document.getElementById("chipRole");
 const chipData = document.getElementById("chipData");
 const chipDisperse = document.getElementById("chipDisperse");
+let modelMode = false;
 
 function cleanUrlParams() {
   const url = new URL(window.location.href);
@@ -66,14 +67,27 @@ function htmlTable(rows) {
 
 function showDashboard() {
   loginCard.classList.add("hidden");
-  dashboard.classList.remove("hidden");
+  if (!modelMode) dashboard.classList.remove("hidden");
   welcomeTitle.textContent = `${state.user.name} (${state.user.role})`;
   if (dataPanel) dataPanel.classList.add("hidden");
 }
 
 function showLogin() {
+  modelMode = false;
   dashboard.classList.add("hidden");
   loginCard.classList.remove("hidden");
+}
+
+function enterModelMode() {
+  modelMode = true;
+  dashboard.classList.add("hidden");
+}
+
+function exitModelMode() {
+  modelMode = false;
+  if (state.token && state.user) {
+    dashboard.classList.remove("hidden");
+  }
 }
 
 async function loadData() {
@@ -245,65 +259,78 @@ const campusCore = new THREE.Mesh(
 campusCore.position.set(0, -0.1, 0);
 scene.add(campusCore);
 
-// Heriot-Watt UK hologram model (stylized landmark cluster)
-const ukModelGroup = new THREE.Group();
-ukModelGroup.position.set(0, 0.3, 2.4);
-ukModelGroup.visible = false;
-scene.add(ukModelGroup);
+// Modern Heriot-Watt-inspired building model (image-based style)
+const buildingModelGroup = new THREE.Group();
+buildingModelGroup.position.set(0, -0.1, 2.6);
+buildingModelGroup.visible = false;
+scene.add(buildingModelGroup);
 
-const ukBase = new THREE.Mesh(
-  new THREE.CylinderGeometry(2.9, 3.2, 0.32, 64),
-  new THREE.MeshStandardMaterial({
-    color: 0x1a2348,
-    emissive: 0x4463ff,
-    emissiveIntensity: 0.55,
-    metalness: 0.6,
-    roughness: 0.3
-  })
-);
-ukBase.position.set(0, -1.0, 0);
-ukModelGroup.add(ukBase);
-
-const towerMat = new THREE.MeshPhysicalMaterial({
-  color: 0x9eb6ff,
-  emissive: 0x5c7dff,
-  emissiveIntensity: 0.38,
-  transmission: 0.25,
+const concreteMat = new THREE.MeshStandardMaterial({
+  color: 0xcfd4df,
+  metalness: 0.28,
+  roughness: 0.6
+});
+const darkMat = new THREE.MeshStandardMaterial({
+  color: 0x1f2536,
+  metalness: 0.4,
+  roughness: 0.42
+});
+const glassMat = new THREE.MeshPhysicalMaterial({
+  color: 0x8cc8ff,
+  transmission: 0.62,
   transparent: true,
-  opacity: 0.92,
-  metalness: 0.52,
-  roughness: 0.25
+  opacity: 0.78,
+  roughness: 0.12,
+  metalness: 0.35
 });
 
-const tower1 = new THREE.Mesh(new THREE.BoxGeometry(1.0, 3.2, 1.0), towerMat);
-tower1.position.set(-1.35, 0.85, 0.2);
-ukModelGroup.add(tower1);
+const podium = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.42, 2.6), concreteMat);
+podium.position.set(0, -1.0, 0);
+buildingModelGroup.add(podium);
 
-const tower2 = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.5, 1.1), towerMat);
-tower2.position.set(0.15, 0.55, 0.1);
-ukModelGroup.add(tower2);
+const core = new THREE.Mesh(new THREE.BoxGeometry(1.05, 3.0, 1.2), darkMat);
+core.position.set(0.2, 0.42, -0.2);
+buildingModelGroup.add(core);
 
-const tower3 = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.9, 0.95), towerMat);
-tower3.position.set(1.5, 0.7, -0.05);
-ukModelGroup.add(tower3);
+const leftWing = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.72, 1.25), concreteMat);
+leftWing.position.set(-1.3, 1.24, 0.25);
+buildingModelGroup.add(leftWing);
 
-const arch = new THREE.Mesh(
-  new THREE.TorusGeometry(0.48, 0.11, 18, 42, Math.PI),
-  new THREE.MeshStandardMaterial({ color: 0xdcc28d, emissive: 0xa77a2f, emissiveIntensity: 0.42 })
-);
-arch.position.set(0.1, -0.38, 0.55);
-arch.rotation.z = Math.PI;
-ukModelGroup.add(arch);
+const rightWing = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.68, 1.2), concreteMat);
+rightWing.position.set(1.55, 1.35, 0.2);
+buildingModelGroup.add(rightWing);
 
-const halo = new THREE.Mesh(
-  new THREE.TorusGeometry(1.85, 0.045, 12, 120),
-  new THREE.MeshBasicMaterial({ color: 0xe7cf9a, transparent: true, opacity: 0.8 })
-);
-halo.rotation.x = Math.PI / 2;
-halo.position.set(0, 1.2, 0);
-ukModelGroup.add(halo);
+const cantileverA = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.55, 1.05), concreteMat);
+cantileverA.position.set(-0.9, 2.0, 0.25);
+buildingModelGroup.add(cantileverA);
 
-let ukModelShowUntil = 0;
+const cantileverB = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.52, 1.0), concreteMat);
+cantileverB.position.set(1.4, 2.2, 0.18);
+buildingModelGroup.add(cantileverB);
+
+const glassBand1 = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.42, 0.08), glassMat);
+glassBand1.position.set(-0.4, 0.38, 1.0);
+buildingModelGroup.add(glassBand1);
+
+const glassBand2 = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.38, 0.08), glassMat);
+glassBand2.position.set(0.5, 1.2, 0.85);
+buildingModelGroup.add(glassBand2);
+
+const glassBand3 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.34, 0.08), glassMat);
+glassBand3.position.set(1.15, 2.0, 0.72);
+buildingModelGroup.add(glassBand3);
+
+const palmMat = new THREE.MeshBasicMaterial({ color: 0x3ccf88, transparent: true, opacity: 0.92 });
+const trunkMat = new THREE.MeshStandardMaterial({ color: 0x7a5a3c, roughness: 0.8, metalness: 0.05 });
+function addPalm(x, z) {
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.45, 8), trunkMat);
+  trunk.position.set(x, -0.8, z);
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 10), palmMat);
+  crown.position.set(x, -0.53, z);
+  buildingModelGroup.add(trunk, crown);
+}
+addPalm(-1.7, 0.95);
+addPalm(1.7, 0.88);
 
 let campusDisperse = false;
 let dispersePower = 0;
@@ -333,8 +360,10 @@ function triggerCampusDisperse() {
 
 chip3d?.addEventListener("click", () => {
   setActiveChip(chip3d);
+  enterModelMode();
+  buildingModelGroup.visible = true;
   sceneBoostUntil = performance.now() + 4000;
-  authMsg.textContent = "3D experience boosted for 4 seconds.";
+  authMsg.textContent = "3D building model launched.";
 });
 
 chipRole?.addEventListener("click", () => {
@@ -349,6 +378,8 @@ chipRole?.addEventListener("click", () => {
 
 chipData?.addEventListener("click", async () => {
   setActiveChip(chipData);
+  exitModelMode();
+  buildingModelGroup.visible = false;
   if (!state.token) {
     authMsg.textContent = "Login first to load real-time placement data.";
     return;
@@ -366,10 +397,7 @@ chipData?.addEventListener("click", async () => {
 chipDisperse?.addEventListener("click", () => {
   setActiveChip(chipDisperse);
   triggerCampusDisperse();
-  ukModelGroup.visible = true;
-  ukModelShowUntil = performance.now() + 15000;
-  sceneBoostUntil = performance.now() + 6000;
-  authMsg.textContent = "3D Heriot-Watt buildings showcase launched.";
+  authMsg.textContent = "Campus disperse effect triggered.";
 });
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
@@ -417,16 +445,11 @@ function animate(t) {
   pointB.position.y = -2 + 2 * Math.sin(time * 0.6);
   camera.lookAt(scene.position);
 
-  if (performance.now() < ukModelShowUntil) {
-    const remain = (ukModelShowUntil - performance.now()) / 15000;
-    const pulse = 1.12 + Math.sin(time * 5.5) * 0.1;
-    ukModelGroup.visible = true;
-    ukModelGroup.rotation.y += 0.017;
-    ukModelGroup.position.y = 0.3 + Math.sin(time * 2.4) * 0.12;
-    ukModelGroup.scale.setScalar(pulse);
-    halo.material.opacity = 0.7 + (1 - remain) * 0.2 + Math.sin(time * 6.2) * 0.1;
-  } else if (ukModelGroup.visible) {
-    ukModelGroup.visible = false;
+  if (buildingModelGroup.visible) {
+    buildingModelGroup.rotation.y += 0.008;
+    buildingModelGroup.position.y = -0.1 + Math.sin(time * 1.8) * 0.06;
+    const s = 1.05 + Math.sin(time * 3.2) * 0.03;
+    buildingModelGroup.scale.set(s, s, s);
   }
 
   campusGroup.rotation.y = Math.sin(time * 0.2) * 0.12;
