@@ -17,6 +17,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_CALLBACK_URL =
   process.env.GOOGLE_CALLBACK_URL || "https://d1-backend-x7eg.onrender.com/api/auth/google/callback";
+const GOOGLE_ALLOWED_DOMAIN = (process.env.GOOGLE_ALLOWED_DOMAIN || "").trim().toLowerCase();
 
 app.set("trust proxy", 1);
 app.use(cors());
@@ -153,7 +154,10 @@ app.get(
       const profile = req.user;
       const email = profile?.emails?.[0]?.value?.toLowerCase();
       const name = profile?.displayName || "Google User";
-      if (!email || !email.endsWith("@hw.uk")) {
+      if (!email) {
+        return res.redirect(`${FRONTEND_URL}?authError=missing_google_email`);
+      }
+      if (GOOGLE_ALLOWED_DOMAIN && !email.endsWith(`@${GOOGLE_ALLOWED_DOMAIN}`)) {
         return res.redirect(`${FRONTEND_URL}?authError=domain_not_allowed`);
       }
       const role = req.session.oauthRole === "ADMIN" ? "ADMIN" : "STUDENT";
