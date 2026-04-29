@@ -27,3 +27,5 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+      - key: GOOGLE_CALLBACK_URL
+        value: https://d1-backend-x7eg.onrender.com/api/auth/google/callback

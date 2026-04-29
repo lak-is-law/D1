@@ -41,6 +41,7 @@ Google OAuth is now fully wired.
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `FRONTEND_URL=https://lak-is-law.github.io/D1/?apiBase=https://d1-backend-x7eg.onrender.com`
+- `GOOGLE_CALLBACK_URL=https://d1-backend-x7eg.onrender.com/api/auth/google/callback`
 
 ### 3) Redeploy Render service
 
