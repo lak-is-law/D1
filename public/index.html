@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heriot-Watt 3D Placement Portal</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <canvas id="bg3d"></canvas>
+
+  <div class="scanlines"></div>
+  <div class="gradient-overlay"></div>
+
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">FUTURE MOBILITY x ACADEMIC EXCELLENCE</p>
+      <h1>Heriot-Watt University</h1>
+      <p class="hero-sub">An immersive placement experience inspired by global premium design languages.</p>
+      <div class="hero-chips">
+        <span>3D Live Experience</span>
+        <span>Role-Secured Access</span>
+        <span>Real-time Placement Data</span>
+        <span>Tap Scene To Disperse Campus</span>
+      </div>
+    </section>
+
+    <section id="loginCard" class="card glass hud-frame">
+      <div class="login-split">
+        <aside class="login-cinematic">
+          <p class="eyebrow reveal delay-1">HERIOT-WATT INTELLIGENCE GRID</p>
+          <h2 class="reveal delay-2">Command The Next Career Orbit</h2>
+          <p class="muted reveal delay-3">
+            A split-screen cinematic onboarding experience with role-governed access and immersive campus simulation.
+          </p>
+          <div class="stat-strip reveal delay-4">
+            <div><span>20+</span><small>Partner Firms</small></div>
+            <div><span>10</span><small>Live Drives</small></div>
+            <div><span>3D</span><small>Campus Layer</small></div>
+          </div>
+        </aside>
+
+        <div class="login-form-panel">
+          <h3 class="reveal delay-2">Portal Access</h3>
+          <p class="muted reveal delay-3">Select role to unlock your permission layer.</p>
+          <form id="loginForm">
+            <label>Email (@hw.uk)</label>
+            <input id="email" type="email" placeholder="name@hw.uk" required />
+
+            <label>Password</label>
+            <input id="password" type="password" placeholder="Password" required />
+
+            <label>Role</label>
+            <select id="role" required>
+              <option value="STUDENT">Student</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+
+            <button type="submit">Launch Experience</button>
+          </form>
+
+          <div class="oauth">
+            <button id="googleLogin" class="outline">Google Sign-In</button>
+            <button id="facebookLogin" class="outline">Facebook Sign-In</button>
+          </div>
+          <p id="authMsg" class="msg"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="dashboard" class="card glass hidden">
+      <div class="row">
+        <h2 id="welcomeTitle">Dashboard</h2>
+        <button id="logoutBtn" class="outline">Logout</button>
+      </div>
+      <div id="summary" class="kpi-grid"></div>
+      <h3>Recent Drives</h3>
+      <div id="drivesTable" class="table-wrap"></div>
+      <h3 id="roleBlockTitle">Role Data</h3>
+      <div id="roleData" class="table-wrap"></div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
