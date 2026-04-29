@@ -182,6 +182,10 @@ app.get("/api/drives", auth(), async (_req, res) => {
   }
 });
 
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, service: "d1-backend" });
+});
+
 app.get("*", (_req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
