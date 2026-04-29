@@ -31,7 +31,23 @@ const campusControls = document.getElementById("campusControls");
 const exitCampusBtn = document.getElementById("exitCampusBtn");
 const openDataBtn = document.getElementById("openDataBtn");
 const appShell = document.querySelector(".shell");
+const featureLab = document.getElementById("featureLab");
+const scanlinesLayer = document.querySelector(".scanlines");
+const heroSub = document.querySelector(".hero-sub");
 let modelMode = false;
+const fx = {
+  sfx: true,
+  ambient: false,
+  rain: false,
+  stars: false,
+  autopilot: false,
+  slowmo: false,
+  neonPulse: false,
+  wireframe: false,
+  glitch: false,
+  typing: false,
+  adminEdit: false
+};
 
 function cleanUrlParams() {
   const url = new URL(window.location.href);
@@ -46,6 +62,58 @@ function parseJwt(token) {
   const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
   return JSON.parse(atob(padded));
+}
+
+let audioCtx;
+let ambientNodes;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playSfx(freq = 420, dur = 0.08, type = "sine") {
+  if (!fx.sfx) return;
+  const ctx = ensureAudio();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = 0.0001;
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  const now = ctx.currentTime;
+  gain.gain.exponentialRampToValueAtTime(0.05, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  osc.start(now);
+  osc.stop(now + dur + 0.01);
+}
+
+function toggleAmbientMusic() {
+  const ctx = ensureAudio();
+  if (ambientNodes) {
+    ambientNodes.osc1.stop();
+    ambientNodes.osc2.stop();
+    ambientNodes = null;
+    fx.ambient = false;
+    return false;
+  }
+  const master = ctx.createGain();
+  master.gain.value = 0.018;
+  master.connect(ctx.destination);
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  osc1.type = "sawtooth";
+  osc2.type = "triangle";
+  osc1.frequency.value = 110;
+  osc2.frequency.value = 164.81;
+  osc1.connect(master);
+  osc2.connect(master);
+  osc1.start();
+  osc2.start();
+  ambientNodes = { osc1, osc2 };
+  fx.ambient = true;
+  return true;
 }
 
 function api(path, options = {}) {
@@ -92,6 +160,7 @@ function showDashboard() {
       .join("");
     profileAvatar.textContent = initials || "HW";
   }
+  renderFeatureLab();
 }
 
 function showLogin() {
@@ -276,6 +345,33 @@ for (let i = 0; i < 120; i += 1) {
   nodes.push(mesh);
   group.add(mesh);
 }
+
+const starGroup = new THREE.Group();
+starGroup.visible = false;
+scene.add(starGroup);
+for (let i = 0; i < 180; i += 1) {
+  const star = new THREE.Mesh(
+    new THREE.SphereGeometry(0.03, 6, 6),
+    new THREE.MeshBasicMaterial({ color: 0xbfd2ff, transparent: true, opacity: 0.8 })
+  );
+  star.position.set((Math.random() - 0.5) * 34, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 18);
+  starGroup.add(star);
+}
+
+const rainDrops = [];
+const rainGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.25, 4);
+const rainMat = new THREE.MeshBasicMaterial({ color: 0x89b4ff, transparent: true, opacity: 0.65 });
+for (let i = 0; i < 180; i += 1) {
+  const drop = new THREE.Mesh(rainGeo, rainMat);
+  drop.rotation.x = Math.PI / 2;
+  drop.position.set((Math.random() - 0.5) * 20, Math.random() * 12 + 1, (Math.random() - 0.5) * 10);
+  drop.visible = false;
+  rainDrops.push(drop);
+  scene.add(drop);
+}
+
+const meteorGroup = new THREE.Group();
+scene.add(meteorGroup);
 
 // Floating "campus hologram" cluster
 const campusGroup = new THREE.Group();
@@ -505,8 +601,9 @@ chipDisperse?.addEventListener("click", () => {
   enterModelMode();
   if (dataPanel) dataPanel.classList.add("hidden");
   buildingModelGroup.visible = false;
-  campusLabelGroup.visible = true;
+  campusLabelGroup.visible = false;
   triggerCampusDisperse();
+  playSfx(220, 0.2, "square");
   authMsg.textContent = "Campus view mode enabled with area labels.";
 });
 
@@ -533,6 +630,125 @@ openDataBtn?.addEventListener("click", async () => {
     authMsg.textContent = `Data refresh failed: ${err.message}`;
   }
 });
+
+function featureButton(label, handler, isActive = false) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `feature-btn${isActive ? " active" : ""}`;
+  btn.textContent = label;
+  btn.addEventListener("click", async () => {
+    try {
+      await handler(btn);
+    } catch (err) {
+      authMsg.textContent = `Feature failed: ${err.message}`;
+    }
+  });
+  return btn;
+}
+
+function addMockDriveCard() {
+  if (!drivesCards) return;
+  const card = document.createElement("article");
+  card.className = "drive-card demo-added";
+  card.innerHTML = `
+    <h4>Meta Reality Labs</h4>
+    <p>Immersive Systems Engineer</p>
+    <p>Package: 32 LPA</p>
+    <p>Eligibility CGPA: 8.8</p>
+  `;
+  drivesCards.prepend(card);
+}
+
+function removeLastAddedCard() {
+  const card = drivesCards?.querySelector(".demo-added");
+  if (card) card.remove();
+}
+
+function exportDashboardData() {
+  const payload = {
+    user: state.user,
+    summaryCards: Array.from(document.querySelectorAll(".kpi .value")).map((n) => n.textContent.trim()),
+    timestamp: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "dashboard-export.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function triggerMeteorShower() {
+  meteorGroup.clear();
+  for (let i = 0; i < 18; i += 1) {
+    const m = new THREE.Mesh(
+      new THREE.SphereGeometry(0.06 + Math.random() * 0.06, 6, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffd79c, transparent: true, opacity: 0.95 })
+    );
+    m.position.set(-8 - Math.random() * 4, 4 + Math.random() * 7, -5 + Math.random() * 10);
+    m.userData.vx = 0.14 + Math.random() * 0.16;
+    m.userData.vy = -0.08 - Math.random() * 0.08;
+    meteorGroup.add(m);
+  }
+}
+
+function speak(msg) {
+  if (!("speechSynthesis" in window)) return;
+  const utter = new SpeechSynthesisUtterance(msg);
+  utter.rate = 1;
+  utter.pitch = 1;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+function startTypewriter() {
+  if (!heroSub) return;
+  const target = "Immersive talent platform with cinematic campus intelligence and smart placement insights.";
+  heroSub.textContent = "";
+  let i = 0;
+  fx.typing = true;
+  const timer = setInterval(() => {
+    if (!fx.typing || i >= target.length) {
+      clearInterval(timer);
+      fx.typing = false;
+      return;
+    }
+    heroSub.textContent += target[i];
+    i += 1;
+  }, 28);
+}
+
+function renderFeatureLab() {
+  if (!featureLab) return;
+  featureLab.innerHTML = "";
+  const isAdmin = state.user?.role === "ADMIN";
+  const features = [
+    ["1) Ambient Music", () => { const on = toggleAmbientMusic(); playSfx(360); authMsg.textContent = on ? "Ambient score ON" : "Ambient score OFF"; }],
+    ["2) Interaction SFX", (btn) => { fx.sfx = !fx.sfx; btn.classList.toggle("active", fx.sfx); playSfx(520); }],
+    ["3) Rain FX", (btn) => { fx.rain = !fx.rain; btn.classList.toggle("active", fx.rain); playSfx(300); }],
+    ["4) Starfield FX", (btn) => { fx.stars = !fx.stars; starGroup.visible = fx.stars; btn.classList.toggle("active", fx.stars); playSfx(330); }],
+    ["5) Auto Camera", (btn) => { fx.autopilot = !fx.autopilot; btn.classList.toggle("active", fx.autopilot); }],
+    ["6) Slow Motion", (btn) => { fx.slowmo = !fx.slowmo; btn.classList.toggle("active", fx.slowmo); }],
+    ["7) Hyper Burst", () => { sceneBoostUntil = performance.now() + 9000; playSfx(180, 0.25, "sawtooth"); }],
+    ["8) Neon Pulse", (btn) => { fx.neonPulse = !fx.neonPulse; btn.classList.toggle("active", fx.neonPulse); }],
+    ["9) Wireframe View", (btn) => { fx.wireframe = !fx.wireframe; [...nodes, ...campusBlocks].forEach((m) => { m.material.wireframe = fx.wireframe; }); btn.classList.toggle("active", fx.wireframe); }],
+    ["10) Glitch Scanlines", (btn) => { fx.glitch = !fx.glitch; btn.classList.toggle("active", fx.glitch); }],
+    ["11) Meteor Shower", () => { triggerMeteorShower(); playSfx(250, 0.18, "square"); }],
+    ["12) Campus Spin", () => { campusGroup.rotation.y += Math.PI / 2; playSfx(290); }],
+    ["13) Screenshot PNG", () => { const a = document.createElement("a"); a.href = renderer.domElement.toDataURL("image/png"); a.download = "hw-3d-shot.png"; a.click(); playSfx(500); }],
+    ["14) Voice Announce", () => { speak(`${state.user.role} dashboard activated. Welcome ${state.user.name}`); }],
+    ["15) Typewriter Hero", (btn) => { startTypewriter(); btn.classList.add("active"); playSfx(420); }],
+    ["16) Fullscreen", () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }],
+    ["17) Export Dashboard JSON", () => { exportDashboardData(); playSfx(350); }],
+    ["18) Theme Shift", () => { document.body.style.filter = document.body.style.filter ? "" : "hue-rotate(45deg) saturate(1.15)"; }],
+    ["19) Admin Add Drive Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } addMockDriveCard(); playSfx(460); }],
+    ["20) Admin Remove Added Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } removeLastAddedCard(); playSfx(240); }]
+  ];
+  for (const [name, handler] of features) {
+    featureLab.appendChild(featureButton(name, handler));
+  }
+}
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
 for (let i = 0; i < 90; i += 1) {
@@ -566,17 +782,30 @@ window.addEventListener("pointerdown", (e) => {
 
 function animate(t) {
   const time = t * 0.001;
+  const speedFactor = fx.slowmo ? 0.45 : 1;
   const boosted = performance.now() < sceneBoostUntil;
   const speedMul = boosted ? 1.9 : 1;
-  group.rotation.y = time * 0.06 * speedMul;
-  group.rotation.x = Math.sin(time * 0.24 * speedMul) * 0.08;
-  camera.position.x += (mouse.x * 1.1 - camera.position.x) * 0.022;
-  camera.position.y += (mouse.y * 0.6 - camera.position.y) * 0.022;
+  group.rotation.y = time * 0.06 * speedMul * speedFactor;
+  group.rotation.x = Math.sin(time * 0.24 * speedMul * speedFactor) * 0.08;
+  const camTargetX = fx.autopilot ? Math.sin(time * 0.5) * 1.3 : mouse.x * 1.1;
+  const camTargetY = fx.autopilot ? Math.cos(time * 0.38) * 0.7 : mouse.y * 0.6;
+  camera.position.x += (camTargetX - camera.position.x) * 0.022;
+  camera.position.y += (camTargetY - camera.position.y) * 0.022;
   camera.position.z = 10 + Math.sin(time * 0.4) * 0.6;
   pointA.position.x = 4 * Math.sin(time * 0.7);
   pointA.position.y = 3 * Math.cos(time * 0.5);
   pointB.position.x = 4 * Math.cos(time * 0.35);
   pointB.position.y = -2 + 2 * Math.sin(time * 0.6);
+  if (fx.neonPulse) {
+    pointA.intensity = 2 + Math.sin(time * 4.2) * 0.8;
+    pointB.intensity = 1.8 + Math.cos(time * 3.8) * 0.7;
+  } else {
+    pointA.intensity = 2.2;
+    pointB.intensity = 1.8;
+  }
+  if (scanlinesLayer) {
+    scanlinesLayer.style.opacity = fx.glitch ? String(0.65 + Math.sin(time * 10) * 0.28) : "1";
+  }
   camera.lookAt(scene.position);
 
   if (buildingModelGroup.visible) {
@@ -640,6 +869,28 @@ function animate(t) {
     n.position.y += Math.sin(time + n.userData.seed) * n.userData.speed;
     n.rotation.x += 0.01;
     n.rotation.y += 0.013;
+  }
+
+  for (const drop of rainDrops) {
+    drop.visible = fx.rain;
+    if (!fx.rain) continue;
+    drop.position.y -= 0.16;
+    if (drop.position.y < -2.2) {
+      drop.position.y = 8 + Math.random() * 5;
+      drop.position.x = (Math.random() - 0.5) * 20;
+      drop.position.z = (Math.random() - 0.5) * 10;
+    }
+  }
+
+  if (meteorGroup.children.length) {
+    for (const m of meteorGroup.children) {
+      m.position.x += m.userData.vx;
+      m.position.y += m.userData.vy;
+      m.material.opacity *= 0.992;
+    }
+    while (meteorGroup.children.length && meteorGroup.children[0].material.opacity < 0.06) {
+      meteorGroup.remove(meteorGroup.children[0]);
+    }
   }
 
   scene.traverse((obj) => {

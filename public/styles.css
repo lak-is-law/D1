@@ -500,6 +500,34 @@ th {
   font-size: 0.83rem;
 }
 
+.feature-lab {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.55rem;
+}
+
+.feature-btn {
+  width: 100%;
+  margin-top: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 14, 34, 0.68);
+  color: #dbe5ff;
+  font-size: 0.8rem;
+  padding: 0.58rem 0.6rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.feature-btn:hover {
+  box-shadow: 0 8px 20px rgba(70, 112, 255, 0.28);
+}
+
+.feature-btn.active {
+  border-color: rgba(216, 190, 138, 0.75);
+  color: #f3deae;
+}
+
 @media (max-width: 700px) {
   .oauth {
     grid-template-columns: 1fr;
