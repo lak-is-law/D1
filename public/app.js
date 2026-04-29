@@ -16,6 +16,10 @@ const dashboard = document.getElementById("dashboard");
 const authMsg = document.getElementById("authMsg");
 const welcomeTitle = document.getElementById("welcomeTitle");
 const roleBlockTitle = document.getElementById("roleBlockTitle");
+const chip3d = document.getElementById("chip3d");
+const chipRole = document.getElementById("chipRole");
+const chipData = document.getElementById("chipData");
+const chipDisperse = document.getElementById("chipDisperse");
 
 function cleanUrlParams() {
   const url = new URL(window.location.href);
@@ -242,7 +246,65 @@ scene.add(campusCore);
 let campusDisperse = false;
 let dispersePower = 0;
 let ringHover = false;
+let sceneBoostUntil = 0;
 const raycaster = new THREE.Raycaster();
+
+function setActiveChip(chip) {
+  [chip3d, chipRole, chipData, chipDisperse].forEach((c) => c && c.classList.remove("active"));
+  if (chip) chip.classList.add("active");
+}
+
+function triggerCampusDisperse() {
+  campusDisperse = true;
+  dispersePower = 1;
+  const blastPoint = new THREE.Vector3(0, 0, 0);
+  for (const b of campusBlocks) {
+    const dir = b.position.clone().sub(blastPoint).normalize();
+    b.userData.velocity.copy(dir.multiplyScalar(0.12 + Math.random() * 0.18));
+    b.userData.spin.set(
+      (Math.random() - 0.5) * 0.12,
+      (Math.random() - 0.5) * 0.12,
+      (Math.random() - 0.5) * 0.12
+    );
+  }
+}
+
+chip3d?.addEventListener("click", () => {
+  setActiveChip(chip3d);
+  sceneBoostUntil = performance.now() + 4000;
+  authMsg.textContent = "3D experience boosted for 4 seconds.";
+});
+
+chipRole?.addEventListener("click", () => {
+  setActiveChip(chipRole);
+  const roleField = document.getElementById("role");
+  roleField.value = roleField.value === "STUDENT" ? "ADMIN" : "STUDENT";
+  authMsg.textContent = `Role switched to ${roleField.value}.`;
+  if (dashboard.classList.contains("hidden")) {
+    loginCard.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+});
+
+chipData?.addEventListener("click", async () => {
+  setActiveChip(chipData);
+  if (!state.token) {
+    authMsg.textContent = "Login first to load real-time placement data.";
+    return;
+  }
+  authMsg.textContent = "Refreshing live dashboard data...";
+  try {
+    await loadData();
+    authMsg.textContent = "Dashboard data updated.";
+  } catch (err) {
+    authMsg.textContent = `Data refresh failed: ${err.message}`;
+  }
+});
+
+chipDisperse?.addEventListener("click", () => {
+  setActiveChip(chipDisperse);
+  triggerCampusDisperse();
+  authMsg.textContent = "Campus disperse effect triggered.";
+});
 
 const lineMat = new THREE.LineBasicMaterial({ color: 0xbccfff, transparent: true, opacity: 0.24 });
 for (let i = 0; i < 90; i += 1) {
@@ -270,24 +332,16 @@ window.addEventListener("pointerdown", (e) => {
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(campusBlocks, false);
   if (intersects.length) {
-    campusDisperse = true;
-    dispersePower = 1;
-    for (const b of campusBlocks) {
-      const dir = b.position.clone().sub(intersects[0].point).normalize();
-      b.userData.velocity.copy(dir.multiplyScalar(0.12 + Math.random() * 0.18));
-      b.userData.spin.set(
-        (Math.random() - 0.5) * 0.12,
-        (Math.random() - 0.5) * 0.12,
-        (Math.random() - 0.5) * 0.12
-      );
-    }
+    triggerCampusDisperse();
   }
 });
 
 function animate(t) {
   const time = t * 0.001;
-  group.rotation.y = time * 0.06;
-  group.rotation.x = Math.sin(time * 0.24) * 0.08;
+  const boosted = performance.now() < sceneBoostUntil;
+  const speedMul = boosted ? 1.9 : 1;
+  group.rotation.y = time * 0.06 * speedMul;
+  group.rotation.x = Math.sin(time * 0.24 * speedMul) * 0.08;
   camera.position.x += (mouse.x * 1.1 - camera.position.x) * 0.022;
   camera.position.y += (mouse.y * 0.6 - camera.position.y) * 0.022;
   camera.position.z = 10 + Math.sin(time * 0.4) * 0.6;
