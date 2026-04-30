@@ -181,6 +181,10 @@ function showLogin() {
   if (appShell) appShell.classList.remove("hidden");
   dashboard.classList.add("hidden");
   dashboard.style.display = "";
+  if (profileName) profileName.textContent = "Candidate";
+  if (profileRole) profileRole.textContent = "STUDENT";
+  if (profileEmail) profileEmail.textContent = "name@hw.uk";
+  if (profileAvatar) profileAvatar.textContent = "HW";
   loginCard.classList.remove("hidden");
 }
 
