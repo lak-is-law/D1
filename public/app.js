@@ -36,9 +36,8 @@ const appShell = document.querySelector(".shell");
 const featureLab = document.getElementById("featureLab");
 const drivesTable = document.getElementById("drivesTable");
 const auditTable = document.getElementById("auditTable");
-const auditPanel = document.getElementById("auditPanel");
-const adminStudentRecordsPanel = document.getElementById("adminStudentRecordsPanel");
-const toggleStudentsBtn = document.getElementById("toggleStudentsBtn");
+const adminStudentsPanel = document.getElementById("adminStudentsPanel");
+const adminAuditPanel = document.getElementById("adminAuditPanel");
 const allStudentsTable = document.getElementById("allStudentsTable");
 const adminWritePanel = document.getElementById("adminWritePanel");
 const addDriveForm = document.getElementById("addDriveForm");
@@ -48,6 +47,8 @@ const tabData = document.getElementById("tabData");
 const tabFeatures = document.getElementById("tabFeatures");
 const overviewPanel = document.getElementById("overviewPanel");
 const featurePanel = document.getElementById("featurePanel");
+const chipStudents = document.getElementById("chipStudents");
+const chipAudit = document.getElementById("chipAudit");
 const scanlinesLayer = document.querySelector(".scanlines");
 const heroSub = document.querySelector(".hero-sub");
 let modelMode = false;
@@ -168,7 +169,13 @@ function showDashboard() {
   if (!modelMode) dashboard.classList.remove("hidden");
   welcomeTitle.textContent = `${state.user.name} (${state.user.role})`;
   switchDashboardTab("overview");
-  if (auditPanel) auditPanel.classList.add("hidden");
+  if (state.user?.role === "ADMIN") {
+    chipStudents?.classList.remove("hidden");
+    chipAudit?.classList.remove("hidden");
+  } else {
+    chipStudents?.classList.add("hidden");
+    chipAudit?.classList.add("hidden");
+  }
   if (profileName) profileName.textContent = state.user.name;
   if (profileRole) profileRole.textContent = state.user.role;
   if (profileEmail) profileEmail.textContent = state.user.email;
@@ -194,6 +201,8 @@ function showLogin() {
   if (profileRole) profileRole.textContent = "STUDENT";
   if (profileEmail) profileEmail.textContent = "name@hw.uk";
   if (profileAvatar) profileAvatar.textContent = "HW";
+  chipStudents?.classList.add("hidden");
+  chipAudit?.classList.add("hidden");
   loginCard.classList.remove("hidden");
 }
 
@@ -222,21 +231,19 @@ function exitModelMode() {
 }
 
 function switchDashboardTab(tab) {
-  if (!overviewPanel || !dataPanel || !featurePanel) return;
+  if (!overviewPanel || !dataPanel || !featurePanel || !adminStudentsPanel || !adminAuditPanel) return;
   overviewPanel.classList.toggle("hidden", tab !== "overview");
   dataPanel.classList.toggle("hidden", tab !== "data");
   featurePanel.classList.toggle("hidden", tab !== "features");
+  adminStudentsPanel.classList.toggle("hidden", tab !== "students");
+  adminAuditPanel.classList.toggle("hidden", tab !== "audit");
   tabOverview?.classList.toggle("active", tab === "overview");
   tabData?.classList.toggle("active", tab === "data");
   tabFeatures?.classList.toggle("active", tab === "features");
 }
 
 async function loadData() {
-  const [summary, drives, audit] = await Promise.all([
-    api("/api/dashboard/summary"),
-    api("/api/drives"),
-    api("/api/dashboard/audit").catch(() => [])
-  ]);
+  const [summary, drives] = await Promise.all([api("/api/dashboard/summary"), api("/api/drives")]);
   document.getElementById("summary").innerHTML = Object.entries(summary)
     .map(([k, v]) => `<div class="kpi"><div class="label">${k.replaceAll("_", " ")}</div><div class="value">${v}</div></div>`)
     .join("");
@@ -256,29 +263,19 @@ async function loadData() {
       .join("");
   }
   if (drivesTable) drivesTable.innerHTML = htmlTable(drives);
-  if (auditTable) auditTable.innerHTML = htmlTable(audit);
 
   if (state.user.role === "ADMIN") {
     roleBlockTitle.textContent = "Confidential Results (Admin)";
     const conf = await api("/api/dashboard/admin/confidential");
     document.getElementById("roleData").innerHTML = htmlTable(conf);
     if (adminWritePanel) adminWritePanel.classList.remove("hidden");
-    if (auditPanel) auditPanel.classList.remove("hidden");
-    if (adminStudentRecordsPanel) adminStudentRecordsPanel.classList.remove("hidden");
   } else {
     roleBlockTitle.textContent = "My Placement Progress (Student)";
     const me = await api("/api/dashboard/student/me");
     document.getElementById("roleData").innerHTML = htmlTable(me);
     if (adminWritePanel) adminWritePanel.classList.add("hidden");
-    if (adminStudentRecordsPanel) {
-      adminStudentRecordsPanel.classList.add("hidden");
-      if (allStudentsTable) allStudentsTable.classList.add("hidden");
-      if (toggleStudentsBtn) toggleStudentsBtn.textContent = "Show Student Records";
-    }
-    if (auditPanel) {
-      auditPanel.classList.add("hidden");
-      if (auditTable) auditTable.innerHTML = "";
-    }
+    if (allStudentsTable) allStudentsTable.innerHTML = "";
+    if (auditTable) auditTable.innerHTML = "";
   }
 }
 
@@ -588,10 +585,35 @@ chipData?.addEventListener("click", async () => {
   authMsg.textContent = "Refreshing live dashboard data...";
   try {
     await loadData();
+    setActiveChip(chipData);
     switchDashboardTab("data");
     authMsg.textContent = "Dashboard data updated.";
   } catch (err) {
     authMsg.textContent = `Data refresh failed: ${err.message}`;
+  }
+});
+
+chipStudents?.addEventListener("click", async () => {
+  if (state.user?.role !== "ADMIN") return;
+  setActiveChip(chipStudents);
+  try {
+    const rows = await api("/api/admin/students");
+    if (allStudentsTable) allStudentsTable.innerHTML = htmlTable(rows);
+    switchDashboardTab("students");
+  } catch (err) {
+    authMsg.textContent = `Load students failed: ${err.message}`;
+  }
+});
+
+chipAudit?.addEventListener("click", async () => {
+  if (state.user?.role !== "ADMIN") return;
+  setActiveChip(chipAudit);
+  try {
+    const rows = await api("/api/dashboard/audit");
+    if (auditTable) auditTable.innerHTML = htmlTable(rows);
+    switchDashboardTab("audit");
+  } catch (err) {
+    authMsg.textContent = `Load audit failed: ${err.message}`;
   }
 });
 
@@ -621,6 +643,7 @@ openDataBtn?.addEventListener("click", async () => {
   authMsg.textContent = "Refreshing live dashboard data...";
   try {
     await loadData();
+    setActiveChip(chipData);
     switchDashboardTab("data");
     authMsg.textContent = "Dashboard data updated.";
   } catch (err) {
@@ -628,9 +651,18 @@ openDataBtn?.addEventListener("click", async () => {
   }
 });
 
-tabOverview?.addEventListener("click", () => switchDashboardTab("overview"));
-tabData?.addEventListener("click", () => switchDashboardTab("data"));
-tabFeatures?.addEventListener("click", () => switchDashboardTab("features"));
+tabOverview?.addEventListener("click", () => {
+  setActiveChip(null);
+  switchDashboardTab("overview");
+});
+tabData?.addEventListener("click", () => {
+  setActiveChip(chipData);
+  switchDashboardTab("data");
+});
+tabFeatures?.addEventListener("click", () => {
+  setActiveChip(null);
+  switchDashboardTab("features");
+});
 
 addDriveForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -670,24 +702,6 @@ addUserForm?.addEventListener("submit", async (e) => {
     addUserForm.reset();
   } catch (err) {
     authMsg.textContent = `Add user failed: ${err.message}`;
-  }
-});
-
-toggleStudentsBtn?.addEventListener("click", async () => {
-  if (allStudentsTable?.classList.contains("hidden")) {
-    try {
-      const rows = await api("/api/admin/students");
-      if (allStudentsTable) {
-        allStudentsTable.innerHTML = htmlTable(rows);
-        allStudentsTable.classList.remove("hidden");
-      }
-      toggleStudentsBtn.textContent = "Hide Student Records";
-    } catch (err) {
-      authMsg.textContent = `Load students failed: ${err.message}`;
-    }
-  } else {
-    allStudentsTable?.classList.add("hidden");
-    toggleStudentsBtn.textContent = "Show Student Records";
   }
 });
 

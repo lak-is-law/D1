@@ -559,9 +559,10 @@ th {
   white-space: nowrap;
 }
 
-#toggleStudentsBtn {
-  width: auto;
-  margin-top: 0;
+#chipStudents,
+#chipAudit {
+  border-color: rgba(216, 190, 138, 0.62);
+  color: #f3deae;
 }
 
 @media (max-width: 700px) {

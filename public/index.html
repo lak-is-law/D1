@@ -27,6 +27,8 @@
         <button id="chipRole" type="button" class="chip-btn">Role-Secured Access</button>
         <button id="chipData" type="button" class="chip-btn">Real-time Placement Data</button>
         <button id="chipDisperse" type="button" class="chip-btn">Tap Scene To Disperse Campus</button>
+        <button id="chipStudents" type="button" class="chip-btn hidden">Admin Student Records</button>
+        <button id="chipAudit" type="button" class="chip-btn hidden">Admin Audit Logs</button>
       </div>
     </section>
 
@@ -107,17 +109,6 @@
           <div id="drivesTable" class="table-wrap"></div>
           <h3 id="roleBlockTitle">Role Data</h3>
           <div id="roleData" class="table-wrap"></div>
-          <div id="adminStudentRecordsPanel" class="hidden">
-            <div class="row">
-              <h3>All Student Records (Admin)</h3>
-              <button id="toggleStudentsBtn" type="button" class="outline">Show Student Records</button>
-            </div>
-            <div id="allStudentsTable" class="table-wrap hidden"></div>
-          </div>
-          <div id="auditPanel" class="hidden">
-            <h3>Login Audit Table (IST)</h3>
-            <div id="auditTable" class="table-wrap"></div>
-          </div>
           <div id="adminWritePanel" class="hidden">
             <h3>Admin Data Entry</h3>
             <form id="addDriveForm" class="inline-form">
@@ -144,6 +135,16 @@
         <section id="featurePanel" class="hidden">
           <h3>Feature Lab</h3>
           <div id="featureLab" class="feature-lab"></div>
+        </section>
+
+        <section id="adminStudentsPanel" class="hidden">
+          <h3>All Student Records (Admin)</h3>
+          <div id="allStudentsTable" class="table-wrap"></div>
+        </section>
+
+        <section id="adminAuditPanel" class="hidden">
+          <h3>Login Audit Table (IST)</h3>
+          <div id="auditTable" class="table-wrap"></div>
         </section>
       </div>
     </section>
