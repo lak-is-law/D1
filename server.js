@@ -47,13 +47,23 @@ const DEMO_AUDIT = [];
 function getDemoStudentRows() {
   return DEMO_USERS.filter((u) => u.role === "STUDENT").map((u, idx) => ({
     user_id: u.user_id,
+    student_id: 1000 + idx + 1,
     name: u.name,
     email: u.email,
     role: u.role,
     reg_no: `HWAUTO${String(9000 + idx + 1)}`,
     department: "CSE",
     cgpa: 8.0 + (idx % 4) * 0.2,
-    graduation_year: 2026
+    graduation_year: 2026,
+    campus_code: u.email.endsWith(".uk")
+      ? "UK"
+      : u.email.endsWith(".my")
+        ? "MY"
+        : u.email.endsWith(".ae")
+          ? "AE"
+          : u.email.endsWith(".us")
+            ? "US"
+            : "UNKNOWN"
   }));
 }
 
@@ -505,13 +515,21 @@ app.get("/api/admin/students", auth("ADMIN"), async (req, res) => {
     const [rows] = await db.query(
       `SELECT
          u.user_id,
+         s.student_id,
          u.name,
          u.email,
          u.role,
          s.reg_no,
          s.department,
          s.cgpa,
-         s.graduation_year
+         s.graduation_year,
+         CASE
+           WHEN u.email LIKE '%.uk' THEN 'UK'
+           WHEN u.email LIKE '%.my' THEN 'MY'
+           WHEN u.email LIKE '%.ae' THEN 'AE'
+           WHEN u.email LIKE '%.us' THEN 'US'
+           ELSE 'UNKNOWN'
+         END AS campus_code
        FROM USERS u
        LEFT JOIN STUDENT s ON s.user_id = u.user_id
        WHERE u.role = 'STUDENT'
