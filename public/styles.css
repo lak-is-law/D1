@@ -539,14 +539,24 @@ th {
 }
 
 .inline-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.7rem;
+  overflow-x: auto;
+}
+
+.inline-form input,
+.inline-form select {
+  min-width: 140px;
+  flex: 1 1 160px;
 }
 
 .inline-form button {
+  flex: 0 0 140px;
   margin-top: 0;
+  white-space: nowrap;
 }
 
 @media (max-width: 700px) {
