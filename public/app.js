@@ -36,6 +36,7 @@ const appShell = document.querySelector(".shell");
 const featureLab = document.getElementById("featureLab");
 const drivesTable = document.getElementById("drivesTable");
 const auditTable = document.getElementById("auditTable");
+const auditPanel = document.getElementById("auditPanel");
 const adminWritePanel = document.getElementById("adminWritePanel");
 const addDriveForm = document.getElementById("addDriveForm");
 const addUserForm = document.getElementById("addUserForm");
@@ -258,11 +259,13 @@ async function loadData() {
     const conf = await api("/api/dashboard/admin/confidential");
     document.getElementById("roleData").innerHTML = htmlTable(conf);
     if (adminWritePanel) adminWritePanel.classList.remove("hidden");
+    if (auditPanel) auditPanel.classList.remove("hidden");
   } else {
     roleBlockTitle.textContent = "My Placement Progress (Student)";
     const me = await api("/api/dashboard/student/me");
     document.getElementById("roleData").innerHTML = htmlTable(me);
     if (adminWritePanel) adminWritePanel.classList.add("hidden");
+    if (auditPanel) auditPanel.classList.add("hidden");
   }
 }
 
@@ -748,7 +751,6 @@ function startTypewriter() {
 function renderFeatureLab() {
   if (!featureLab) return;
   featureLab.innerHTML = "";
-  const isAdmin = state.user?.role === "ADMIN";
   const groupedFeatures = [
     {
       title: "Audio",
@@ -786,13 +788,6 @@ function renderFeatureLab() {
         ["Fullscreen", () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }],
         ["Export Dashboard JSON", () => { exportDashboardData(); playSfx(350); }],
         ["Typewriter Hero", (btn) => { startTypewriter(); btn.classList.add("active"); playSfx(420); }]
-      ]
-    },
-    {
-      title: "Admin Controls",
-      items: [
-        ["Admin Add Drive Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } addMockDriveCard(); playSfx(460); }],
-        ["Admin Remove Added Card", () => { if (!isAdmin) { authMsg.textContent = "Admin only feature."; return; } removeLastAddedCard(); playSfx(240); }]
       ]
     }
   ];
