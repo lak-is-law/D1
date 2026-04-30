@@ -8,7 +8,10 @@ const queryApiBase = params.get("apiBase");
 if (queryApiBase) {
   localStorage.setItem("hw_api_base", queryApiBase.replace(/\/+$/, ""));
 }
-const API_BASE = (queryApiBase || localStorage.getItem("hw_api_base") || "").replace(/\/+$/, "");
+const FALLBACK_API_BASE = window.location.hostname.endsWith("onrender.com")
+  ? window.location.origin
+  : "https://d1-backend-x7eg.onrender.com";
+const API_BASE = (queryApiBase || localStorage.getItem("hw_api_base") || FALLBACK_API_BASE).replace(/\/+$/, "");
 const IS_GITHUB_PAGES = window.location.hostname.endsWith("github.io");
 
 const loginCard = document.getElementById("loginCard");
