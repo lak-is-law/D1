@@ -675,24 +675,6 @@ function featureButton(label, handler, isActive = false) {
   return btn;
 }
 
-function addMockDriveCard() {
-  if (!drivesCards) return;
-  const card = document.createElement("article");
-  card.className = "drive-card demo-added";
-  card.innerHTML = `
-    <h4>Meta Reality Labs</h4>
-    <p>Immersive Systems Engineer</p>
-    <p>Package: 32 LPA</p>
-    <p>Eligibility CGPA: 8.8</p>
-  `;
-  drivesCards.prepend(card);
-}
-
-function removeLastAddedCard() {
-  const card = drivesCards?.querySelector(".demo-added");
-  if (card) card.remove();
-}
-
 function exportDashboardData() {
   const payload = {
     user: state.user,
