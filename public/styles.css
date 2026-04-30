@@ -559,6 +559,11 @@ th {
   white-space: nowrap;
 }
 
+#toggleStudentsBtn {
+  width: auto;
+  margin-top: 0;
+}
+
 @media (max-width: 700px) {
   .oauth {
     grid-template-columns: 1fr;

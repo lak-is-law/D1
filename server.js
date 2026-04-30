@@ -44,6 +44,19 @@ const DEMO_DRIVES = [
 ];
 const DEMO_AUDIT = [];
 
+function getDemoStudentRows() {
+  return DEMO_USERS.filter((u) => u.role === "STUDENT").map((u, idx) => ({
+    user_id: u.user_id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    reg_no: `HWAUTO${String(9000 + idx + 1)}`,
+    department: "CSE",
+    cgpa: 8.0 + (idx % 4) * 0.2,
+    graduation_year: 2026
+  }));
+}
+
 app.set("trust proxy", 1);
 app.use(cors());
 app.use(express.json());
@@ -482,6 +495,32 @@ app.post("/api/admin/users", auth("ADMIN"), async (req, res) => {
     return res.json({ message: "User added (demo mode)", user: { user_id: nextId, name, email, role } });
   }
   return res.status(501).json({ message: "Write mode for non-demo DB not enabled in this build" });
+});
+
+app.get("/api/admin/students", auth("ADMIN"), async (req, res) => {
+  if (req.user.demo) {
+    return res.json(getDemoStudentRows());
+  }
+  try {
+    const [rows] = await db.query(
+      `SELECT
+         u.user_id,
+         u.name,
+         u.email,
+         u.role,
+         s.reg_no,
+         s.department,
+         s.cgpa,
+         s.graduation_year
+       FROM USERS u
+       LEFT JOIN STUDENT s ON s.user_id = u.user_id
+       WHERE u.role = 'STUDENT'
+       ORDER BY u.user_id DESC`
+    );
+    return res.json(rows);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 });
 
 app.get("/api/health", (_req, res) => {

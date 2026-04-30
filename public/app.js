@@ -37,6 +37,9 @@ const featureLab = document.getElementById("featureLab");
 const drivesTable = document.getElementById("drivesTable");
 const auditTable = document.getElementById("auditTable");
 const auditPanel = document.getElementById("auditPanel");
+const adminStudentRecordsPanel = document.getElementById("adminStudentRecordsPanel");
+const toggleStudentsBtn = document.getElementById("toggleStudentsBtn");
+const allStudentsTable = document.getElementById("allStudentsTable");
 const adminWritePanel = document.getElementById("adminWritePanel");
 const addDriveForm = document.getElementById("addDriveForm");
 const addUserForm = document.getElementById("addUserForm");
@@ -261,11 +264,17 @@ async function loadData() {
     document.getElementById("roleData").innerHTML = htmlTable(conf);
     if (adminWritePanel) adminWritePanel.classList.remove("hidden");
     if (auditPanel) auditPanel.classList.remove("hidden");
+    if (adminStudentRecordsPanel) adminStudentRecordsPanel.classList.remove("hidden");
   } else {
     roleBlockTitle.textContent = "My Placement Progress (Student)";
     const me = await api("/api/dashboard/student/me");
     document.getElementById("roleData").innerHTML = htmlTable(me);
     if (adminWritePanel) adminWritePanel.classList.add("hidden");
+    if (adminStudentRecordsPanel) {
+      adminStudentRecordsPanel.classList.add("hidden");
+      if (allStudentsTable) allStudentsTable.classList.add("hidden");
+      if (toggleStudentsBtn) toggleStudentsBtn.textContent = "Show Student Records";
+    }
     if (auditPanel) {
       auditPanel.classList.add("hidden");
       if (auditTable) auditTable.innerHTML = "";
@@ -661,6 +670,24 @@ addUserForm?.addEventListener("submit", async (e) => {
     addUserForm.reset();
   } catch (err) {
     authMsg.textContent = `Add user failed: ${err.message}`;
+  }
+});
+
+toggleStudentsBtn?.addEventListener("click", async () => {
+  if (allStudentsTable?.classList.contains("hidden")) {
+    try {
+      const rows = await api("/api/admin/students");
+      if (allStudentsTable) {
+        allStudentsTable.innerHTML = htmlTable(rows);
+        allStudentsTable.classList.remove("hidden");
+      }
+      toggleStudentsBtn.textContent = "Hide Student Records";
+    } catch (err) {
+      authMsg.textContent = `Load students failed: ${err.message}`;
+    }
+  } else {
+    allStudentsTable?.classList.add("hidden");
+    toggleStudentsBtn.textContent = "Show Student Records";
   }
 });
 
