@@ -451,9 +451,6 @@ app.get("/api/drives", auth(), async (_req, res) => {
 });
 
 app.get("/api/dashboard/audit", auth(), async (req, res) => {
-  if (req.user.demo) {
-    return res.json(DEMO_AUDIT);
-  }
   try {
     const [rows] = await db.query(
       `SELECT
@@ -472,6 +469,7 @@ app.get("/api/dashboard/audit", auth(), async (req, res) => {
     );
     return res.json(rows);
   } catch (err) {
+    if (req.user.demo) return res.json(DEMO_AUDIT);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -508,9 +506,6 @@ app.post("/api/admin/users", auth("ADMIN"), async (req, res) => {
 });
 
 app.get("/api/admin/students", auth("ADMIN"), async (req, res) => {
-  if (req.user.demo) {
-    return res.json(getDemoStudentRows());
-  }
   try {
     const [rows] = await db.query(
       `SELECT
@@ -537,6 +532,7 @@ app.get("/api/admin/students", auth("ADMIN"), async (req, res) => {
     );
     return res.json(rows);
   } catch (err) {
+    if (req.user.demo) return res.json(getDemoStudentRows());
     return res.status(500).json({ message: err.message });
   }
 });
