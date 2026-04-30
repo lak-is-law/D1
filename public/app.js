@@ -165,6 +165,7 @@ function showDashboard() {
   if (!modelMode) dashboard.classList.remove("hidden");
   welcomeTitle.textContent = `${state.user.name} (${state.user.role})`;
   switchDashboardTab("overview");
+  if (auditPanel) auditPanel.classList.add("hidden");
   if (profileName) profileName.textContent = state.user.name;
   if (profileRole) profileRole.textContent = state.user.role;
   if (profileEmail) profileEmail.textContent = state.user.email;
@@ -265,7 +266,10 @@ async function loadData() {
     const me = await api("/api/dashboard/student/me");
     document.getElementById("roleData").innerHTML = htmlTable(me);
     if (adminWritePanel) adminWritePanel.classList.add("hidden");
-    if (auditPanel) auditPanel.classList.add("hidden");
+    if (auditPanel) {
+      auditPanel.classList.add("hidden");
+      if (auditTable) auditTable.innerHTML = "";
+    }
   }
 }
 
