@@ -147,7 +147,11 @@ function api(path, options = {}) {
 function htmlTable(rows) {
   if (!rows || !rows.length) return "<p>No data</p>";
   const cols = Object.keys(rows[0]);
-  const head = `<tr>${cols.map((c) => `<th>${c}</th>`).join("")}</tr>`;
+  const formatHeader = (key) =>
+    String(key)
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (ch) => ch.toUpperCase());
+  const head = `<tr>${cols.map((c) => `<th>${formatHeader(c)}</th>`).join("")}</tr>`;
   const body = rows
     .slice(0, 20)
     .map((r) => `<tr>${cols.map((c) => `<td>${r[c] ?? ""}</td>`).join("")}</tr>`)
